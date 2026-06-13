@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.fifa.plugin"
-version = "1.0.0-SNAPSHOT"
+version = "3.0.0"
 
 repositories {
     mavenCentral()
@@ -40,26 +40,42 @@ intellijPlatform {
             untilBuild = "253.*"
         }
         description = """
-            2026美加墨世界杯实时比分、赛程、积分榜 IDEA 插件
-            <br/>
-            数据来源: football-data.org
-            <br/><br/>
-            功能:
+            <p>FIFA World Cup 2026 — Live scores, schedules, group standings, FIFA rankings,
+            text-live commentary and news for the 2026 USA-Canada-Mexico World Cup, right inside your IDE.
+            Zero configuration: no API key, no token, no signup required.</p>
+
+            <p><b>2026 美加墨世界杯实时比分 / 赛程 / 积分榜 / 文字直播 / 新闻 IDEA 插件</b></p>
+
+            <p>Data sources: Baidu Sports (tiyu.baidu.com) + TheSportsDB public API.</p>
+
+            <h3>Features 功能</h3>
             <ul>
-                <li>实时比分 - StatusBar 显示正在进行的比赛</li>
-                <li>赛程浏览 - 小组赛到决赛全赛程</li>
-                <li>积分榜 - 12个小组实时排名</li>
-                <li>比赛提醒 - 关注球队开赛通知</li>
+                <li><b>StatusBar live score</b> — 状态栏实时比分</li>
+                <li><b>Schedule</b> — 按日期切换的世界杯赛程</li>
+                <li><b>Live</b> — 直播 / 即将开赛 / 已结束比赛 + 详情弹窗 (分析 + 文字直播)</li>
+                <li><b>Standings</b> — 12 个小组实时积分榜</li>
+                <li><b>Team rankings</b> — 全 48 队跨组排名</li>
+                <li><b>FIFA rankings</b> — FIFA 官方 211 队排名</li>
+                <li><b>News</b> — 世界杯实时新闻卡片流</li>
             </ul>
         """.trimIndent()
 
         changeNotes = """
-            <h3>1.0.0</h3>
+            <h3>3.0.0</h3>
             <ul>
-                <li>Initial release</li>
-                <li>赛事赛程查看</li>
-                <li>实时比分显示</li>
-                <li>小组积分榜</li>
+                <li>Removed deprecated <code>URL(String)</code> constructor in news image loading (replaced with <code>URI.create().toURL()</code>)</li>
+                <li>Cleaned up Marketplace verifier warnings: 0 deprecated / 0 scheduled-for-removal API usages</li>
+            </ul>
+
+            <h3>2.0.0</h3>
+            <ul>
+                <li>Added 6 functional tabs: Schedule / Live / Standings / Team Rankings / FIFA Rankings / News</li>
+                <li>Match detail dialog with analysis (predictions / intelligence / head-to-head) and text-live commentary</li>
+                <li>StatusBar live score widget</li>
+                <li>Replaced deprecated <code>EditorBasedWidget</code> base class and <code>MultipleTextValuesPresentation</code></li>
+                <li>Removed legacy <code>ProjectManagerListener</code> (scheduled for removal in newer platform)</li>
+                <li>Cleaned up source-attribution UI clutter from each tab</li>
+                <li>Zero configuration — no API key required</li>
             </ul>
         """.trimIndent()
 
@@ -78,6 +94,6 @@ java {
 tasks {
     withType<JavaCompile> {
         options.encoding = "UTF-8"
-        options.compilerArgs.add("-Xlint:unchecked")
+        options.compilerArgs.addAll(listOf("-Xlint:unchecked", "-Xlint:deprecation"))
     }
 }

@@ -55,7 +55,7 @@ public class LivePanel extends JPanel {
         title.setFont(title.getFont().deriveFont(Font.BOLD, 13f));
         top.add(title);
         top.add(Box.createHorizontalStrut(12));
-        JLabel hint = new JLabel("<html><small>数据来源: 百度体育 tiyu.baidu.com · 点击行查看详情 · 60 秒刷新</small></html>");
+        JLabel hint = new JLabel("<html><small>点击行查看详情 · 60 秒刷新</small></html>");
         hint.setForeground(UIManager.getColor("Label.disabledForeground"));
         top.add(hint);
         add(top, BorderLayout.NORTH);
@@ -158,9 +158,9 @@ public class LivePanel extends JPanel {
                     });
                 }
                 if (liveOrUpcoming.isEmpty()) {
-                    setStatus("⚠ 当前无直播 / 即将开赛 / 已结束的比赛 (或百度接口未返回)");
+                    setStatus("⚠ 当前无直播 / 即将开赛 / 已结束的比赛");
                 } else {
-                    setStatus("✓ 百度体育 · " + liveOrUpcoming.size() + " 场可关注 · " + new java.util.Date());
+                    setStatus("✓ " + liveOrUpcoming.size() + " 场可关注 · " + new java.util.Date());
                 }
             });
         } catch (Exception e) {

@@ -59,7 +59,7 @@ public class NewsPanel extends JPanel {
             SwingUtilities.invokeLater(() -> {
                 listPanel.removeAll();
                 if (news.isEmpty()) {
-                    listPanel.add(centerLabel("暂无新闻数据 (百度接口未返回)"));
+                    listPanel.add(centerLabel("暂无新闻数据"));
                 } else {
                     for (FootballDataClient.NewsItem n : news) {
                         listPanel.add(buildCard(n));
@@ -68,7 +68,7 @@ public class NewsPanel extends JPanel {
                 }
                 listPanel.revalidate();
                 listPanel.repaint();
-                setStatus("✓ 百度体育 · 已加载 " + news.size() + " 条新闻 · " + new java.util.Date());
+                setStatus("✓ 已加载 " + news.size() + " 条新闻 · " + new java.util.Date());
             });
         } catch (Exception e) {
             LOG.warn("News refresh error", e);
@@ -109,7 +109,8 @@ public class NewsPanel extends JPanel {
 
         if (n.imageUrl != null && !n.imageUrl.isEmpty()) {
             try {
-                java.net.URL url = new java.net.URL(n.imageUrl);
+                // JDK 20+ 已废弃 URL(String), 改用 URI.create().toURL()
+                java.net.URL url = java.net.URI.create(n.imageUrl).toURL();
                 ImageIcon icon = new ImageIcon(url);
                 Image scaled = icon.getImage().getScaledInstance(400, -1, Image.SCALE_SMOOTH);
                 JLabel img = new JLabel(new ImageIcon(scaled));

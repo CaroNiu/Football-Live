@@ -97,11 +97,6 @@ public class SchedulePanel extends JPanel {
         });
         toolbar.add(refreshBtn);
 
-        toolbar.add(Box.createHorizontalStrut(12));
-        JBLabel hint = new JBLabel("<html><small>数据来源: 百度体育 tiyu.baidu.com/al/api · 30 秒刷新</small></html>");
-        hint.setForeground(UIManager.getColor("Label.disabledForeground"));
-        toolbar.add(hint);
-
         add(toolbar, BorderLayout.NORTH);
 
         // ---- 表格 ----
@@ -138,7 +133,7 @@ public class SchedulePanel extends JPanel {
         BaiduSportsClient baidu = ApplicationManager.getApplication()
                 .getService(BaiduSportsClient.class);
         if (baidu == null) {
-            setStatus("⚠ BaiduSportsClient 服务未注册");
+            setStatus("⚠ 服务未注册");
             return;
         }
         try {
@@ -170,9 +165,9 @@ public class SchedulePanel extends JPanel {
                     dateSelector.setSelectedIndex(todayIdx);
                 }
                 if (bundle.matches.isEmpty()) {
-                    setStatus("⚠ 百度体育 API 未返回数据");
+                    setStatus("⚠ 暂无数据");
                 } else {
-                    setStatus("✓ 百度体育 · 已加载 " + bundle.matches.size() + " 场比赛 · " + new java.util.Date());
+                    setStatus("✓ 已加载 " + bundle.matches.size() + " 场比赛 · " + new java.util.Date());
                 }
             });
         } catch (Exception e) {
@@ -190,7 +185,7 @@ public class SchedulePanel extends JPanel {
         SwingUtilities.invokeLater(() -> {
             tableModel.setRowCount(0);
             if (matches == null || matches.isEmpty()) {
-                setStatus("⚠ " + date + " 当日无比赛 (或尚未从 API 加载)");
+                setStatus("⚠ " + date + " 当日无比赛");
                 return;
             }
             // 按开球时间排序
@@ -210,7 +205,7 @@ public class SchedulePanel extends JPanel {
                         formatStatus(m.getStatus())
                 });
             }
-            setStatus("✓ " + date + " · " + matches.size() + " 场比赛 · 百度体育 JSON API");
+            setStatus("✓ " + date + " · " + matches.size() + " 场比赛");
         });
     }
 

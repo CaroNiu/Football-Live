@@ -68,7 +68,7 @@
 git clone https://github.com/fifa-worldcup-plugin/FIFA.git
 cd FIFA
 ./gradlew buildPlugin
-# 产物在 build/distributions/FIFA-World-Cup-2026-1.0.0-SNAPSHOT.zip
+# 产物在 build/distributions/FIFA-World-Cup-2026-3.0.0.zip
 ```
 
 > Windows 用户使用 `gradlew.bat` 替换 `./gradlew`。
@@ -196,7 +196,7 @@ TournamentManager (单线程 ScheduledExecutorService)
 
 # 打包插件
 ./gradlew buildPlugin
-# 输出 build/distributions/FIFA-World-Cup-2026-1.0.0-SNAPSHOT.zip
+# 输出 build/distributions/FIFA-World-Cup-2026-3.0.0.zip
 
 # 验证插件兼容性
 ./gradlew verifyPlugin

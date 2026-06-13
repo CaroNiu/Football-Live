@@ -74,9 +74,6 @@ public class StandingPanel extends JPanel {
         toolbar.add(refreshBtn);
 
         toolbar.add(Box.createHorizontalStrut(12));
-        JBLabel hint = new JBLabel("<html><small>数据来源: 百度体育 tiyu.baidu.com · 60 秒刷新</small></html>");
-        hint.setForeground(UIManager.getColor("Label.disabledForeground"));
-        toolbar.add(hint);
 
         add(toolbar, BorderLayout.NORTH);
 
@@ -115,7 +112,7 @@ public class StandingPanel extends JPanel {
         BaiduRankingsClient client = ApplicationManager.getApplication()
                 .getService(BaiduRankingsClient.class);
         if (client == null) {
-            setStatus("⚠ BaiduRankingsClient 服务未注册");
+            setStatus("⚠ 服务未注册");
             return;
         }
         try {
@@ -123,9 +120,9 @@ public class StandingPanel extends JPanel {
             SwingUtilities.invokeLater(() -> {
                 cache = bundle.groups;
                 if (cache.isEmpty()) {
-                    setStatus("⚠ 百度体育 API 未返回积分榜数据");
+                    setStatus("⚠ 暂无积分榜数据");
                 } else {
-                    setStatus("✓ 百度体育 · 已加载 " + cache.size() + " 个小组 · " + new java.util.Date());
+                    setStatus("✓ 已加载 " + cache.size() + " 个小组 · " + new java.util.Date());
                 }
                 String sel = (String) groupSelector.getSelectedItem();
                 if (sel == null) sel = "A";
@@ -146,7 +143,7 @@ public class StandingPanel extends JPanel {
         SwingUtilities.invokeLater(() -> {
             tableModel.setRowCount(0);
             if (teams == null || teams.isEmpty()) {
-                setStatus("⚠ Group " + group + " 数据尚未在 API 中返回 (赛事可能尚未开始)");
+                setStatus("⚠ Group " + group + " 数据尚未返回 (赛事可能尚未开始)");
                 return;
             }
             for (BaiduRankedTeam t : teams) {
@@ -162,7 +159,7 @@ public class StandingPanel extends JPanel {
                         status
                 });
             }
-            setStatus("✓ Group " + group + " · " + teams.size() + " 队 · 百度体育 JSON API");
+            setStatus("✓ Group " + group + " · " + teams.size() + " 队");
         });
     }
 

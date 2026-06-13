@@ -45,7 +45,7 @@ public class FifaRankingPanel extends JPanel {
         title.setFont(title.getFont().deriveFont(Font.BOLD, 13f));
         top.add(title);
         top.add(Box.createHorizontalStrut(12));
-        JLabel hint = new JLabel("<html><small>数据来源: 百度体育 tiyu.baidu.com · 30 分钟刷新</small></html>");
+        JLabel hint = new JLabel("<html><small>30 分钟刷新</small></html>");
         hint.setForeground(UIManager.getColor("Label.disabledForeground"));
         top.add(hint);
         add(top, BorderLayout.NORTH);
@@ -76,7 +76,7 @@ public class FifaRankingPanel extends JPanel {
         BaiduFifaRankingsClient client = ApplicationManager.getApplication()
                 .getService(BaiduFifaRankingsClient.class);
         if (client == null) {
-            setStatus("⚠ BaiduFifaRankingsClient 服务未注册");
+            setStatus("⚠ 服务未注册");
             return;
         }
         try {
@@ -84,7 +84,7 @@ public class FifaRankingPanel extends JPanel {
             SwingUtilities.invokeLater(() -> {
                 tableModel.setRowCount(0);
                 if (rankings.isEmpty()) {
-                    setStatus("⚠ 百度体育 API 未返回 FIFA 排名数据");
+                    setStatus("⚠ 暂无 FIFA 排名数据");
                     return;
                 }
                 for (BaiduFifaRankingsClient.FifaRankEntry r : rankings) {
@@ -95,7 +95,7 @@ public class FifaRankingPanel extends JPanel {
                             formatChange(r.change)
                     });
                 }
-                setStatus("✓ 百度体育 · 已加载 " + rankings.size() + " 队 FIFA 排名 · " + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                setStatus("✓ 已加载 " + rankings.size() + " 队 FIFA 排名 · " + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             });
         } catch (Exception e) {
             LOG.warn("FIFA ranking refresh error", e);

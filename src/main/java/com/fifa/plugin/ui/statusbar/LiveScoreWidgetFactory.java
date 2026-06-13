@@ -2,26 +2,23 @@ package com.fifa.plugin.ui.statusbar;
 
 import com.fifa.plugin.core.TournamentManager;
 import com.fifa.plugin.model.Match;
-import com.fifa.plugin.settings.FifaSettingsState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
-import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
 /**
  * StatusBar 实时比分 Widget
  * <p>
- * 格式: ⚽ ARG 2:1 FRA (67')  或  ⚽ 今日无比赛
+ * 格式: ⚽ ARG 2:1 FRA (67')  或  ⚽ No live matches
  */
 public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
 
@@ -42,7 +39,7 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
 
     @Override
     public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
-        return new LiveScoreWidget(project);
+        return new LiveScoreWidget();
     }
 
     @Override
@@ -51,19 +48,52 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
 
     /**
      * 实际的 Widget 实现
+     * <p>
+     * 直接实现 {@link StatusBarWidget} + {@link StatusBarWidget.TextPresentation},
+     * 不继承 EditorBasedWidget(其构造器已 scheduled-for-removal),
+     * 也不再使用 MultipleTextValuesPresentation(其 getMaxValue() 已 deprecated)
      */
-    private static class LiveScoreWidget extends EditorBasedWidget
-            implements StatusBarWidget.TextPresentation, StatusBarWidget.MultipleTextValuesPresentation {
+    private static final class LiveScoreWidget implements StatusBarWidget, StatusBarWidget.TextPresentation {
 
         private String currentText = "⚽";
-
-        public LiveScoreWidget(@NotNull Project project) {
-            super(project);
-        }
+        private @Nullable StatusBar myStatusBar;
 
         @Override
         public @NotNull String ID() {
             return "FIFA.LiveScoreWidget";
+        }
+
+        @Override
+        public @Nullable WidgetPresentation getPresentation() {
+            return this;
+        }
+
+        @Override
+        public void install(@NotNull StatusBar statusBar) {
+            this.myStatusBar = statusBar;
+            // 启动轮询
+            TournamentManager tm = ApplicationManager.getApplication()
+                    .getService(TournamentManager.class);
+            if (tm != null) {
+                tm.startPolling();
+            }
+        }
+
+        @Override
+        public void dispose() {
+            this.myStatusBar = null;
+        }
+
+        // ---- TextPresentation ----
+
+        @Override
+        public @NotNull String getText() {
+            return currentText;
+        }
+
+        @Override
+        public float getAlignment() {
+            return 1.0f;
         }
 
         @Nullable
@@ -86,60 +116,12 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
             };
         }
 
-        @Override
-        public @NotNull StatusBarWidget.WidgetPresentation getPresentation() {
-            return this;
-        }
-
-        @Nullable
-        @Override
-        public String getText() {
-            return currentText;
-        }
-
-        @Override
-        public float getAlignment() {
-            return 1.0f;
-        }
-
-        @Nullable
-        @Override
-        public String getSelectedValue() {
-            return currentText;
-        }
-
-        @Nullable
-        @Override
-        public String getMaxValue() {
-            return "";
-        }
-
-        @Nullable
-        @Override
-        public Icon getIcon() {
-            return null;
-        }
-
-        @Override
-        public void install(@NotNull StatusBar statusBar) {
-            super.install(statusBar);
-            // 启动轮询
-            TournamentManager tm = ApplicationManager.getApplication()
-                    .getService(TournamentManager.class);
-            if (tm != null) {
-                tm.startPolling();
-            }
-        }
-
-        @Override
-        public void dispose() {
-            super.dispose();
-        }
+        // ---- 内部 ----
 
         /**
-         * 由点击处理器调用: 重新拉取实时比分并刷新 StatusBar
+         * 由点击处理器调用: 重新计算文本并通知 StatusBar 重绘
          */
-        public void update() {
+        private void update() {
             updateText();
             if (myStatusBar != null) {
                 myStatusBar.updateWidget(ID());
@@ -147,9 +129,9 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
         }
 
         /**
-         * 更新显示文本 (由 update() 或外部定时器调用)
+         * 更新显示文本
          */
-        public void updateText() {
+        private void updateText() {
             TournamentManager tm = ApplicationManager.getApplication()
                     .getService(TournamentManager.class);
             if (tm == null) return;
@@ -161,7 +143,6 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
                 Match m = liveMatches.get(0);
                 currentText = formatSingleMatch(m);
             } else {
-                // 多场比赛: 显示第一场 + "..."
                 Match m = liveMatches.get(0);
                 currentText = formatSingleMatch(m) + " ...";
             }
