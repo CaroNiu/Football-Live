@@ -1,0 +1,23 @@
+README.md
+  36d066641f7e628c 1-279
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "c4c0ac7aecbbf900e5cfa0c24e3686a9ecfb9fa1",
+  "prompts": {
+    "36d066641f7e628c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d84e2b7f-ab45-4cf8-97a1-0e0e38ea3d6e",
+        "model": "minimax-m3"
+      },
+      "human_author": "JMS\\caro.niu",
+      "messages": [],
+      "total_additions": 279,
+      "total_deletions": 0,
+      "accepted_lines": 279,
+      "overriden_lines": 0
+    }
+  }
+}
