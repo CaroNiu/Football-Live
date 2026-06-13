@@ -1,0 +1,83 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+    <id>com.fifa.plugin.worldcup2026</id>
+    <name>FIFA World Cup 2026</name>
+    <vendor email="fifa@plugin.dev" url="https://github.com/fifa-worldcup-plugin">FIFA Plugin</vendor>
+
+    <!-- 插件图标: IntelliJ Platform 2024.3 移除了 <icon> 元素, 改为自动从 META-INF/pluginIcon.svg 加载 -->
+
+    <description><![CDATA[
+        2026美加墨世界杯实时比分、赛程、积分榜 IDEA 插件
+        <br/>
+        数据来源: football-data.org (免费)
+        <br/><br/>
+        功能:
+        <ul>
+            <li>实时比分 - StatusBar 显示正在进行的比赛</li>
+            <li>赛程浏览 - 小组赛到决赛全赛程</li>
+            <li>积分榜 - 12个小组实时排名</li>
+            <li>比赛提醒 - 关注球队开赛通知</li>
+        </ul>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- StatusBar 实时比分 Widget -->
+        <statusBarWidgetFactory
+                id="FIFA.LiveScoreWidget"
+                implementation="com.fifa.plugin.ui.statusbar.LiveScoreWidgetFactory"
+                order="after Encoding" />
+
+        <!-- ToolWindow: 单页面双 Tab (今日比赛 + 积分榜) -->
+        <toolWindow
+                id="FIFA"
+                anchor="right"
+                icon="icons/fifaSchedule.svg"
+                factoryClass="com.fifa.plugin.ui.toolwindow.FifaToolWindowFactory" />
+
+        <!-- 设置页面 -->
+        <applicationConfigurable
+                id="FIFA.Settings"
+                instance="com.fifa.plugin.settings.FifaSettingsConfigurable"
+                displayName="FIFA World Cup 2026" />
+
+        <!-- 通知组 -->
+        <notificationGroup
+                id="FIFA.Notification"
+                displayType="BALLOON" />
+
+        <!-- 应用级别服务 -->
+        <applicationService
+                serviceImplementation="com.fifa.plugin.api.FootballDataClient" />
+        <applicationService
+                serviceImplementation="com.fifa.plugin.api.BaiduSportsClient" />
+        <applicationService
+                serviceImplementation="com.fifa.plugin.api.BaiduRankingsClient" />
+        <applicationService
+                serviceImplementation="com.fifa.plugin.api.BaiduFifaRankingsClient" />
+        <applicationService
+                serviceImplementation="com.fifa.plugin.api.BaiduLiveMatchClient" />
+        <applicationService
+                serviceImplementation="com.fifa.plugin.cache.MatchCache" />
+        <applicationService
+                serviceImplementation="com.fifa.plugin.core.TournamentManager" />
+        <applicationService
+                serviceImplementation="com.fifa.plugin.settings.FifaSettingsState" />
+
+        <!-- 项目生命周期监听 -->
+        <projectService
+                serviceImplementation="com.fifa.plugin.core.FifaProjectListener" />
+    </extensions>
+
+    <actions>
+        <!-- 刷新赛程数据 -->
+        <action
+                id="FIFA.RefreshSchedule"
+                class="com.fifa.plugin.ui.action.RefreshAction"
+                text="Refresh FIFA Data"
+                description="刷新世界杯数据"
+                icon="icons/fifaRefresh.svg">
+            <add-to-group group-id="ToolsMenu" anchor="last" />
+        </action>
+    </actions>
+</idea-plugin>
