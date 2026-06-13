@@ -1,0 +1,39 @@
+build.gradle.kts
+  36d066641f7e628c 7,43-51,53-59,64-70,72-78,97
+src/main/java/com/fifa/plugin/ui/toolwindow/FifaRankingPanel.java
+  36d066641f7e628c 48,79,87,98
+src/main/java/com/fifa/plugin/ui/toolwindow/NewsPanel.java
+  36d066641f7e628c 62,71,112-113
+README.md
+  36d066641f7e628c 71,199
+src/main/resources/META-INF/plugin.xml
+  36d066641f7e628c 9-17,19-25,74-75
+src/main/java/com/fifa/plugin/ui/toolwindow/StandingPanel.java
+  36d066641f7e628c 115,123,125,146,162
+src/main/java/com/fifa/plugin/ui/toolwindow/SchedulePanel.java
+  36d066641f7e628c 136,168,170,188,208
+src/main/java/com/fifa/plugin/ui/statusbar/LiveScoreWidgetFactory.java
+  36d066641f7e628c 21,42,51-54,56,59,67-68,72-79,83-84,87-88,90,101-102,107-116,119,122,124,132,134
+src/main/java/com/fifa/plugin/ui/toolwindow/LivePanel.java
+  36d066641f7e628c 58,161,163
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "ec1adb2e6c452b5251bb51eebb096f02a3f4716f",
+  "prompts": {
+    "36d066641f7e628c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d84e2b7f-ab45-4cf8-97a1-0e0e38ea3d6e",
+        "model": "minimax-m3"
+      },
+      "human_author": "JMS\\caro.niu",
+      "messages": [],
+      "total_additions": 118,
+      "total_deletions": 122,
+      "accepted_lines": 113,
+      "overriden_lines": 0
+    }
+  }
+}
