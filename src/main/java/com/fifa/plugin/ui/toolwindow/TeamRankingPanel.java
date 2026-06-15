@@ -1,8 +1,7 @@
 package com.fifa.plugin.ui.toolwindow;
 
-import com.fifa.plugin.api.FootballDataClient;
-import com.fifa.plugin.model.ComputedStanding;
-import com.fifa.plugin.util.TeamNames;
+import com.fifa.plugin.api.BaiduRankingsClient;
+import com.fifa.plugin.model.BaiduRankedTeam;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.components.JBLabel;
@@ -19,7 +18,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 球队榜: 全部 48 队按积分 / 净胜球 / 进球数 跨组排序
+ * 球队榜: 全部参赛队按 积分 / 净胜球 / 进球数 跨组排序
+ * <p>
+ * 数据源: 百度体育 /al/match?tab=排名 (复用积分榜, 12 组 flatten + 跨组排序).
+ * 之前用 TheSportsDB 本地从 rounds 1-3 算, 在比赛未开打时拿不到数据 — 改用百度直接给的小组赛果.
  */
 public class TeamRankingPanel extends JPanel {
 
@@ -63,27 +65,28 @@ public class TeamRankingPanel extends JPanel {
     }
 
     public void refresh() {
-        FootballDataClient client = ApplicationManager.getApplication()
-                .getService(FootballDataClient.class);
+        BaiduRankingsClient client = ApplicationManager.getApplication()
+                .getService(BaiduRankingsClient.class);
         if (client == null) return;
 
         try {
-            List<ComputedStanding> rankings = client.fetchTeamRankings();
+            List<BaiduRankedTeam> rankings = client.fetchTeamRankings();
             SwingUtilities.invokeLater(() -> {
                 tableModel.setRowCount(0);
                 if (rankings.isEmpty()) {
-                    setStatus("⚠ 暂无球队数据 (rounds 1-3 比赛尚未开始)");
+                    setStatus("⚠ 暂无球队数据");
                     return;
                 }
                 int rank = 1;
-                for (ComputedStanding s : rankings) {
+                for (BaiduRankedTeam t : rankings) {
+                    int diff = t.goalsFor - t.goalsAgainst;
                     tableModel.addRow(new Object[]{
                             rank++,
-                            TeamNames.toChinese(s.teamName),
-                            s.played, s.won, s.draw, s.lost,
-                            s.goalsFor, s.goalsAgainst,
-                            formatDiff(s.goalDifference),
-                            s.points
+                            t.name != null ? t.name : "?",
+                            t.played, t.won, t.draw, t.lost,
+                            t.goalsFor, t.goalsAgainst,
+                            formatDiff(diff),
+                            t.points
                     });
                 }
                 setStatus("✓ 已加载 " + rankings.size() + " 支球队 · " + new java.util.Date());

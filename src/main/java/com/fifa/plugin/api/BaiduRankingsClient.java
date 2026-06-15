@@ -193,4 +193,42 @@ public final class BaiduRankingsClient {
             this.knockoutStages = knockoutStages;
         }
     }
+
+    // ============================================================
+    //  球队榜 (跨组按积分排序的 48 队)
+    // ============================================================
+
+    /**
+     * 拉取"球队榜": 把 12 组积分榜 flatten 后, 按 积分 / 净胜球 / 进球数 / 队名 跨组排序
+     * <p>
+     * 端点: 复用 {@link #fetch()} 那个 <code>/al/match?tab=排名</code> 接口 — Baidu 实际并没有
+     * 一份"全 48 队按积分排"的接口, 球队榜 Tab 返的是 32 项统计榜 (进球/助攻/抢断/...) 而非积分榜.
+     * 这里通过合并 12 组积分数据 + 跨组排序得到用户预期的视图.
+     * <p>
+     * 注: 单组 4 队 × 12 组 = 48 队, 实际上当前赛段可能少于 48 队(部分比赛未开始, 小组未填).
+     *
+     * @return 跨组排序后的全部球队, 积分降序. 返回空列表表示无可用数据.
+     */
+    public List<BaiduRankedTeam> fetchTeamRankings() throws IOException {
+        RankingBundle bundle = fetch();
+        List<BaiduRankedTeam> all = new ArrayList<>();
+        for (List<BaiduRankedTeam> group : bundle.groups.values()) {
+            if (group == null) continue;
+            all.addAll(group);
+        }
+        // 排序: 积分 > 净胜球 > 进球数 > 队名 (与 UI 期望顺序一致)
+        all.sort((a, b) -> {
+            int c = Integer.compare(b.points, a.points);
+            if (c != 0) return c;
+            int aDiff = a.goalsFor - a.goalsAgainst;
+            int bDiff = b.goalsFor - b.goalsAgainst;
+            c = Integer.compare(bDiff, aDiff);
+            if (c != 0) return c;
+            c = Integer.compare(b.goalsFor, a.goalsFor);
+            if (c != 0) return c;
+            return String.CASE_INSENSITIVE_ORDER.compare(
+                    a.name != null ? a.name : "", b.name != null ? b.name : "");
+        });
+        return all;
+    }
 }

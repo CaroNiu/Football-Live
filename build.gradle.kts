@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.fifa.plugin"
-version = "3.0.0"
+version = "3.0.1"
 
 repositories {
     mavenCentral()
@@ -61,6 +61,11 @@ intellijPlatform {
         """.trimIndent()
 
         changeNotes = """
+            <h3>3.0.1</h3>
+            <ul>
+                <li>Fixed "球队榜" tab: switched data source from local TheSportsDB round aggregation to Baidu 12-group standings flattening. Previously returned empty when no rounds had finished; now always shows the current team ranking.</li>
+            </ul>
+
             <h3>3.0.0</h3>
             <ul>
                 <li>Removed deprecated <code>URL(String)</code> constructor in news image loading (replaced with <code>URI.create().toURL()</code>)</li>

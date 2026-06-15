@@ -373,34 +373,6 @@ public final class FootballDataClient {
     }
 
     // ============================================================
-    //  球队榜 (Team Rankings)
-    // ============================================================
-
-    /**
-     * 球队排行榜: 按积分 / 净胜球 / 进球数 排序, 跨组比较
-     * <p>
-     * 数据来源: 从 rounds 1-3 已结束比赛累加每队 W/D/L/GF/GA/Pts,
-     * 没有比赛结束的小组也会显示 (0 分)
-     */
-    public List<ComputedStanding> fetchTeamRankings() throws IOException {
-        Map<String, List<ComputedStanding>> grouped = computeGroupStandings();
-        List<ComputedStanding> all = new ArrayList<>();
-        for (List<ComputedStanding> group : grouped.values()) {
-            all.addAll(group);
-        }
-        all.sort((x, y) -> {
-            int c = Integer.compare(y.points, x.points);
-            if (c != 0) return c;
-            c = Integer.compare(y.goalDifference, x.goalDifference);
-            if (c != 0) return c;
-            c = Integer.compare(y.goalsFor, x.goalsFor);
-            if (c != 0) return c;
-            return x.teamName.compareTo(y.teamName);
-        });
-        return all;
-    }
-
-    // ============================================================
     //  球员榜单 (Player Rankings)
     // ============================================================
 
