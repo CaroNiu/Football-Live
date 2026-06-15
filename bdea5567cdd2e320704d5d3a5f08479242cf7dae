@@ -1,0 +1,27 @@
+build.gradle.kts
+  36d066641f7e628c 7,64-68
+src/main/java/com/fifa/plugin/ui/toolwindow/TeamRankingPanel.java
+  36d066641f7e628c 3-4,21-24,68-69,73,77,81-82,85-89
+src/main/java/com/fifa/plugin/api/BaiduRankingsClient.java
+  36d066641f7e628c 196-233
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "bdea5567cdd2e320704d5d3a5f08479242cf7dae",
+  "prompts": {
+    "36d066641f7e628c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d84e2b7f-ab45-4cf8-97a1-0e0e38ea3d6e",
+        "model": "minimax-m3"
+      },
+      "human_author": "JMS\\caro.niu",
+      "messages": [],
+      "total_additions": 61,
+      "total_deletions": 43,
+      "accepted_lines": 61,
+      "overriden_lines": 0
+    }
+  }
+}
