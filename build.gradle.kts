@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.fifa.plugin"
-version = "3.0.1"
+version = "3.0.2"
 
 repositories {
     mavenCentral()
@@ -61,6 +61,12 @@ intellijPlatform {
         """.trimIndent()
 
         changeNotes = """
+            <h3>3.0.2</h3>
+            <ul>
+                <li>Made source code repository public to comply with JetBrains Marketplace review requirements</li>
+                <li>Added <code>PRIVACY.md</code> at the repository root to document the zero-data-collection policy</li>
+            </ul>
+
             <h3>3.0.1</h3>
             <ul>
                 <li>Fixed "球队榜" tab: switched data source from local TheSportsDB round aggregation to Baidu 12-group standings flattening. Previously returned empty when no rounds had finished; now always shows the current team ranking.</li>
