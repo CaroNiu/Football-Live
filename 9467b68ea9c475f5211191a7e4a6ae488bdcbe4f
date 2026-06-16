@@ -1,0 +1,25 @@
+PRIVACY.md
+  4fd5aa0e9b1637c1 1-87
+build.gradle.kts
+  4fd5aa0e9b1637c1 7,64-69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "9467b68ea9c475f5211191a7e4a6ae488bdcbe4f",
+  "prompts": {
+    "4fd5aa0e9b1637c1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3437654c-512e-4362-b14f-a94d4e8baef4",
+        "model": "minimax-m3"
+      },
+      "human_author": "JMS\\caro.niu",
+      "messages": [],
+      "total_additions": 94,
+      "total_deletions": 1,
+      "accepted_lines": 94,
+      "overriden_lines": 0
+    }
+  }
+}
