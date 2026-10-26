@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "41d070ca3c4752af13a4d7dc5602f30aba06e3e5",
+  "prompts": {
+    "244e6f98a3da33fb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1b029a22-cbc3-4a51-9d0c-367c0a1dd8ce",
+        "model": "glm-5.3-flash"
+      },
+      "human_author": "CaroNiu",
+      "messages": [],
+      "total_additions": 775,
+      "total_deletions": 0,
+      "accepted_lines": 775,
+      "overriden_lines": 0
+    }
+  }
+}
