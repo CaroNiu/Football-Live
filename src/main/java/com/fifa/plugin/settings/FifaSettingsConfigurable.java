@@ -2,31 +2,35 @@ package com.fifa.plugin.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * 插件设置页面 (File → Settings → Tools → FIFA World Cup 2026)
+ * 插件设置页面 (File → Settings → Tools → 足球直播 Football Live)
  * <p>
- * 数据源已切换为 TheSportsDB 公共 API, 用户无需配置 Token,
- * 这里只保留 UI 偏好和关注球队
+ * 全赛事版: 公共数据源零配置, 这里维护 UI 偏好 / 关注赛事 / 关注球队
  */
 public class FifaSettingsConfigurable implements Configurable {
 
     private JCheckBox showLiveScoreCheck;
     private JCheckBox enableNotificationCheck;
     private JBTextField favoriteTeamField;
+    private JBTextArea followedLeaguesField;
 
     @Nls
     @Override
     public String getDisplayName() {
-        return "FIFA World Cup 2026";
+        return "足球直播 Football Live";
     }
 
     @Nullable
@@ -40,8 +44,8 @@ public class FifaSettingsConfigurable implements Configurable {
         JPanel dataSourcePanel = new JPanel();
         dataSourcePanel.setLayout(new BoxLayout(dataSourcePanel, BoxLayout.Y_AXIS));
         dataSourcePanel.setBorder(BorderFactory.createTitledBorder("数据源"));
-        JLabel source1 = new JBLabel("  TheSportsDB 公共 API · 实时赛程 / 比分 / 积分榜");
-        JLabel source2 = new JBLabel("  数据每日自动更新, 离线缓存 5-10 分钟, 无需配置");
+        JLabel source1 = new JBLabel("  百度体育 (tiyu.baidu.com) · 全部足球赛事赛程 / 比分 / 积分榜 / 新闻");
+        JLabel source2 = new JBLabel("  公共数据源, 客户端缓存 1-5 分钟, 无需任何配置");
         source1.setFont(source1.getFont().deriveFont(12f));
         source2.setFont(source2.getFont().deriveFont(11f));
         source2.setForeground(UIManager.getColor("Label.disabledForeground"));
@@ -64,6 +68,20 @@ public class FifaSettingsConfigurable implements Configurable {
         panel.add(enableNotificationCheck);
         panel.add(Box.createVerticalStrut(10));
 
+        // 关注赛事 (逗号分隔, 与工具窗口选择条同步)
+        JPanel leaguesPanel = new JPanel(new BorderLayout());
+        leaguesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        leaguesPanel.add(new JBLabel("关注赛事 (逗号分隔, 如: 英超,西甲,欧冠): "), BorderLayout.NORTH);
+        followedLeaguesField = new JBTextArea(3, 30);
+        followedLeaguesField.setLineWrap(true);
+        leaguesPanel.add(followedLeaguesField, BorderLayout.CENTER);
+        JLabel leaguesHint = new JBLabel("  工具窗口顶部的赛事选择条可随时快捷切换");
+        leaguesHint.setFont(leaguesHint.getFont().deriveFont(10f));
+        leaguesHint.setForeground(UIManager.getColor("Label.disabledForeground"));
+        leaguesPanel.add(leaguesHint, BorderLayout.SOUTH);
+        panel.add(leaguesPanel);
+        panel.add(Box.createVerticalStrut(10));
+
         // 关注球队
         JPanel favPanel = new JPanel();
         favPanel.setLayout(new BoxLayout(favPanel, BoxLayout.X_AXIS));
@@ -73,12 +91,7 @@ public class FifaSettingsConfigurable implements Configurable {
         favPanel.add(favoriteTeamField);
         favPanel.add(Box.createHorizontalGlue());
 
-        JLabel favHint = new JBLabel(" ");
-        favHint.setFont(favHint.getFont().deriveFont(10f));
-        favHint.setForeground(UIManager.getColor("Label.disabledForeground"));
-
         panel.add(favPanel);
-        panel.add(favHint);
 
         return panel;
     }
@@ -88,7 +101,8 @@ public class FifaSettingsConfigurable implements Configurable {
         FifaSettingsState.State state = FifaSettingsState.getInstance().getState();
         return showLiveScoreCheck.isSelected() != state.showLiveScoreInStatusBar
                 || enableNotificationCheck.isSelected() != state.enableMatchNotification
-                || !favoriteTeamField.getText().equals(state.favoriteTeam);
+                || !favoriteTeamField.getText().equals(state.favoriteTeam)
+                || !joinedFollowed().equals(joined(state.followedLeagues));
     }
 
     @Override
@@ -97,6 +111,12 @@ public class FifaSettingsConfigurable implements Configurable {
         settings.setShowLiveScoreInStatusBar(showLiveScoreCheck.isSelected());
         settings.setEnableMatchNotification(enableNotificationCheck.isSelected());
         settings.setFavoriteTeam(favoriteTeamField.getText().trim());
+        List<String> leagues = new ArrayList<>();
+        for (String s : followedLeaguesField.getText().split("[,，]")) {
+            String t = s.trim();
+            if (!t.isEmpty()) leagues.add(t);
+        }
+        settings.setFollowedLeagues(leagues);
     }
 
     @Override
@@ -105,5 +125,14 @@ public class FifaSettingsConfigurable implements Configurable {
         showLiveScoreCheck.setSelected(state.showLiveScoreInStatusBar);
         enableNotificationCheck.setSelected(state.enableMatchNotification);
         favoriteTeamField.setText(state.favoriteTeam);
+        followedLeaguesField.setText(joined(state.followedLeagues));
+    }
+
+    private String joinedFollowed() {
+        return joined(FifaSettingsState.getInstance().getFollowedLeagues());
+    }
+
+    private static String joined(java.util.List<String> leagues) {
+        return leagues == null ? "" : String.join(",", leagues);
     }
 }

@@ -1,7 +1,9 @@
 package com.fifa.plugin.ui.statusbar;
 
-import com.fifa.plugin.core.TournamentManager;
+import com.fifa.plugin.core.FootballDataManager;
+import com.fifa.plugin.core.LeagueRegistry;
 import com.fifa.plugin.model.Match;
+import com.fifa.plugin.settings.FifaSettingsState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
@@ -29,7 +31,7 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
 
     @Override
     public @Nls @NotNull String getDisplayName() {
-        return "FIFA Live Score";
+        return "足球直播比分";
     }
 
     @Override
@@ -72,10 +74,10 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
         public void install(@NotNull StatusBar statusBar) {
             this.myStatusBar = statusBar;
             // 启动轮询
-            TournamentManager tm = ApplicationManager.getApplication()
-                    .getService(TournamentManager.class);
-            if (tm != null) {
-                tm.startPolling();
+            FootballDataManager dm = ApplicationManager.getApplication()
+                    .getService(FootballDataManager.class);
+            if (dm != null) {
+                dm.startPolling();
             }
         }
 
@@ -99,7 +101,7 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
         @Nullable
         @Override
         public String getTooltipText() {
-            return "FIFA World Cup 2026 Live Score - Click to refresh";
+            return "足球直播比分 - 点击刷新";
         }
 
         @Nullable
@@ -107,10 +109,10 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
         public Consumer<MouseEvent> getClickConsumer() {
             return event -> {
                 // 点击时刷新数据
-                TournamentManager tm = ApplicationManager.getApplication()
-                        .getService(TournamentManager.class);
-                if (tm != null) {
-                    tm.refreshAll();
+                FootballDataManager dm = ApplicationManager.getApplication()
+                        .getService(FootballDataManager.class);
+                if (dm != null) {
+                    dm.refreshAll();
                     update();
                 }
             };
@@ -130,22 +132,45 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
 
         /**
          * 更新显示文本
+         * <p>
+         * 多场进行中时的优先级: 关注球队命中 > 关注/选中赛事命中 > 第一场;
+         * 溢出时以 "+N" 提示
          */
         private void updateText() {
-            TournamentManager tm = ApplicationManager.getApplication()
-                    .getService(TournamentManager.class);
-            if (tm == null) return;
+            FootballDataManager dm = ApplicationManager.getApplication()
+                    .getService(FootballDataManager.class);
+            if (dm == null) return;
 
-            List<Match> liveMatches = tm.getLiveMatches();
+            List<Match> liveMatches = dm.getLiveMatches();
             if (liveMatches.isEmpty()) {
-                currentText = "⚽ No live matches";
-            } else if (liveMatches.size() == 1) {
-                Match m = liveMatches.get(0);
-                currentText = formatSingleMatch(m);
-            } else {
-                Match m = liveMatches.get(0);
-                currentText = formatSingleMatch(m) + " ...";
+                currentText = "⚽ 无进行中的比赛";
+                return;
             }
+            String favoriteTeam = FifaSettingsState.getInstance().getFavoriteTeam();
+            String preferredLeague = LeagueRegistry.getInstance().getSelected();
+            String followed = LeagueRegistry.getInstance().getFollowed().isEmpty()
+                    ? "" : LeagueRegistry.getInstance().getFollowed().get(0);
+
+            Match shown = liveMatches.get(0);
+            for (Match m : liveMatches) {
+                String home = m.getHomeTeam() != null ? m.getHomeTeam().getName() : "";
+                String away = m.getAwayTeam() != null ? m.getAwayTeam().getName() : "";
+                String league = m.getLeagueName() != null ? m.getLeagueName() : "";
+                if (favoriteTeam != null && !favoriteTeam.isEmpty()
+                        && (home.contains(favoriteTeam) || away.contains(favoriteTeam))) {
+                    shown = m;
+                    break;
+                }
+                if (preferredLeague != null && !preferredLeague.isEmpty() && preferredLeague.equals(league)) {
+                    shown = m;
+                    break;
+                }
+                if (!followed.isEmpty() && followed.equals(league)) {
+                    shown = m;
+                }
+            }
+            currentText = formatSingleMatch(shown)
+                    + (liveMatches.size() > 1 ? " +" + (liveMatches.size() - 1) : "");
         }
 
         private String formatSingleMatch(Match m) {

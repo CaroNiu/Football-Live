@@ -24,12 +24,21 @@ import java.util.concurrent.TimeUnit;
 /**
  * 百度体育积分榜专用客户端
  * 端点: /al/match?match=...&tab=排名&async_source=h5&tab_type=single&from=baidu_shoubai_na&getAll=1
+ * <p>
+ * 返回形态是 san SSR HTML, 排名数据在 <code>&lt;!--s-data:{JSON}--&gt;</code> 注释里,
+ * 且两种嵌套并存 ( PoC 验证 2026-10-26 ):
+ * <ul>
+ *   <li>国家队杯赛 (世界杯): tplData.data.tabsList[0].tabList[].data[] 按 type=groupStage 分组</li>
+ *   <li>职业联赛 (英超):   data.tabsList[0].tabList[0].data[0].list[] 单表, requestParams.season 给出赛季</li>
+ * </ul>
+ * 两种形态的每队 record[5] 数组同构, 解析逻辑统一走 {@link #parseTeam}
  */
 @Service
 public final class BaiduRankingsClient {
 
     private static final Logger LOG = Logger.getInstance(BaiduRankingsClient.class);
     private static final String HOST = "https://tiyu.baidu.com";
+    private static final String DEFAULT_MATCH = "世界杯";
 
     private final OkHttpClient http = new OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
@@ -39,16 +48,27 @@ public final class BaiduRankingsClient {
     public BaiduRankingsClient() {
     }
 
+    /** 拉取世界杯排名 (兼容旧调用) */
     public RankingBundle fetch() throws IOException {
+        return fetch(DEFAULT_MATCH);
+    }
+
+    /**
+     * 拉取指定赛事的排名 (matchName 如 "英超" / "世界杯")
+     */
+    public RankingBundle fetch(String matchName) throws IOException {
         String url = HOST + "/al/match"
-                + "?match=" + enc("世界杯")
+                + "?match=" + enc(matchName != null && !matchName.isEmpty() ? matchName : DEFAULT_MATCH)
                 + "&tab=" + enc("排名")
                 + "&&async_source=h5&tab_type=single&from=baidu_shoubai_na"
                 + "&request__node__params=1&getAll=1";
         String body = httpGet(url);
         if (body == null) return new RankingBundle(Collections.emptyMap(), Collections.emptyList());
         try {
-            return parse(JsonParser.parseString(body).getAsJsonObject());
+            // async 端点返回纯 JSON (tplData.data...), 兜底 s-data HTML — 双模式统一入口
+            JsonObject root = BaiduMatchListClient.parseResponseRoot(body);
+            if (root == null) return new RankingBundle(Collections.emptyMap(), Collections.emptyList());
+            return parse(root);
         } catch (Exception e) {
             LOG.warn("Baidu rankings parse error", e);
             return new RankingBundle(Collections.emptyMap(), Collections.emptyList());
@@ -59,18 +79,9 @@ public final class BaiduRankingsClient {
         Map<String, List<BaiduRankedTeam>> groups = new LinkedHashMap<>();
         List<String> knockoutStages = new ArrayList<>();
         if (root == null) return new RankingBundle(groups, knockoutStages);
-        JsonObject tplData = root.has("tplData") && !root.get("tplData").isJsonNull()
-                ? root.getAsJsonObject("tplData") : null;
-        if (tplData == null) return new RankingBundle(groups, knockoutStages);
-        JsonObject data = tplData.has("data") && !tplData.get("data").isJsonNull()
-                ? tplData.getAsJsonObject("data") : null;
-        if (data == null) return new RankingBundle(groups, knockoutStages);
 
-        // 结构: tplData.data.tabsList[0].tabList[0].data[]  (12 小组)
-        //       tplData.data.tabsList[0].tabList[1].data[]  (淘汰赛)
-        // 实际还有 tplData.data.tabsList[] 自身可能多包一层
-        JsonArray topTabs = data.has("tabsList") && !data.get("tabsList").isJsonNull()
-                ? data.getAsJsonArray("tabsList") : new JsonArray();
+        // tabsList 位置双形态: tplData.data.tabsList (世界杯) / data.tabsList (联赛)
+        JsonArray topTabs = findTabsList(root);
         for (JsonElement topEl : topTabs) {
             if (!topEl.isJsonObject()) continue;
             JsonObject top = topEl.getAsJsonObject();
@@ -89,12 +100,13 @@ public final class BaiduRankingsClient {
                         ? tab.getAsJsonArray("data") : new JsonArray();
 
                 if ("groupStage".equals(type)) {
+                    // 世界杯形态: data2[] 每项是一个小组 {title:"A组", list:[4 队]}
                     for (JsonElement grp : data2) {
                         if (!grp.isJsonObject()) continue;
                         JsonObject g = grp.getAsJsonObject();
-                        String title = g.has("title") ? g.get("title").getAsString() : "";
-                        String letter = extractGroupLetter(title);
-                        if (letter == null) continue;
+                        String title = g.has("title") && !g.get("title").isJsonNull() ? g.get("title").getAsString() : "";
+                        String key = groupKey(title);
+                        if (key == null) continue;
                         JsonArray list = g.has("list") && !g.get("list").isJsonNull()
                                 ? g.getAsJsonArray("list") : new JsonArray();
                         List<BaiduRankedTeam> teams = new ArrayList<>();
@@ -102,7 +114,7 @@ public final class BaiduRankingsClient {
                             BaiduRankedTeam t = parseTeam(te);
                             if (t != null) teams.add(t);
                         }
-                        groups.put(letter, teams);
+                        groups.put(key, teams);
                     }
                 } else if ("knockoutStage".equals(type)) {
                     if (tab.has("tabs") && tab.get("tabs").isJsonArray()) {
@@ -110,10 +122,62 @@ public final class BaiduRankingsClient {
                             if (!s.isJsonNull()) knockoutStages.add(s.getAsString());
                         }
                     }
+                } else if (data2.size() > 0) {
+                    // 联赛形态 (type="1" 等): data2[] 每项 {title:"联赛", list:[20 队]}
+                    for (JsonElement secEl : data2) {
+                        if (!secEl.isJsonObject()) continue;
+                        JsonObject sec = secEl.getAsJsonObject();
+                        JsonArray list = sec.has("list") && !sec.get("list").isJsonNull()
+                                ? sec.getAsJsonArray("list") : new JsonArray();
+                        if (list.size() == 0) continue;
+                        String key = groupKey(str(sec, "title"));
+                        List<BaiduRankedTeam> teams = new ArrayList<>();
+                        for (JsonElement te : list) {
+                            BaiduRankedTeam t = parseTeam(te);
+                            if (t != null) teams.add(t);
+                        }
+                        if (!teams.isEmpty()) groups.put(key, teams);
+                    }
                 }
             }
         }
         return new RankingBundle(groups, knockoutStages);
+    }
+
+    /**
+     * tabsList 位置兼容: 优先 tplData.data.tabsList (世界杯), 回退 data.tabsList (英超等联赛)
+     */
+    private static JsonArray findTabsList(JsonObject root) {
+        JsonObject tplData = root.has("tplData") && !root.get("tplData").isJsonNull()
+                ? root.getAsJsonObject("tplData") : null;
+        if (tplData != null) {
+            JsonObject td = tplData.has("data") && tplData.get("data").isJsonObject()
+                    ? tplData.getAsJsonObject("data") : null;
+            if (td != null && td.has("tabsList") && td.get("tabsList").isJsonArray()) {
+                return td.getAsJsonArray("tabsList");
+            }
+        }
+        JsonObject data = root.has("data") && root.get("data").isJsonObject()
+                ? root.getAsJsonObject("data") : null;
+        if (data != null && data.has("tabsList") && data.get("tabsList").isJsonArray()) {
+            return data.getAsJsonArray("tabsList");
+        }
+        return new JsonArray();
+    }
+
+    /**
+     * 组 key: "A组" → "A" (紧凑, 兼容旧 UI); 其他标题 (如 "联赛"/"总榜") 原样作 key
+     */
+    private static String groupKey(String title) {
+        if (title == null || title.isEmpty()) return null;
+        String t = title.trim();
+        if (t.length() == 2 && t.endsWith("组")) {
+            char c = t.charAt(0);
+            if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+                return String.valueOf(Character.toUpperCase(c));
+            }
+        }
+        return t;
     }
 
     private BaiduRankedTeam parseTeam(JsonElement te) {
@@ -127,8 +191,9 @@ public final class BaiduRankingsClient {
         t.teamId = o.has("teamId") && !o.get("teamId").isJsonNull() ? o.get("teamId").getAsString() : "";
         String status = o.has("fillsName") && !o.get("fillsName").isJsonNull() ? o.get("fillsName").getAsString() : "";
         t.statusText = status;
-        t.qualified = "晋级32强".equals(status);
-        t.uncertain = "晋级待定".equals(status);
+        // 晋级状态泛化: 联赛是 "欧冠正赛"/"降级区" 等, 杯赛是 "晋级32强"/"晋级待定"
+        t.qualified = status.contains("晋级") && !status.contains("待定");
+        t.uncertain = status.contains("待定");
 
         if (rec.get(0).isJsonObject()) {
             JsonObject ti = rec.get(0).getAsJsonObject();
@@ -155,13 +220,9 @@ public final class BaiduRankingsClient {
         try { return Integer.parseInt(s); } catch (NumberFormatException e) { return 0; }
     }
 
-    private static String extractGroupLetter(String title) {
-        if (title == null) return null;
-        for (int i = 0; i < title.length(); i++) {
-            char c = title.charAt(i);
-            if (c >= 'A' && c <= 'L') return String.valueOf(c);
-        }
-        return null;
+    private static String str(JsonObject o, String key) {
+        if (o == null || !o.has(key) || o.get(key).isJsonNull()) return "";
+        return o.get(key).getAsString();
     }
 
     private static String enc(String s) {
@@ -172,6 +233,7 @@ public final class BaiduRankingsClient {
         Request request = new Request.Builder()
                 .url(url)
                 .header("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148")
+                // 不带 text/html, 避开企业零信任代理对"网页浏览"型请求的劫持 (见 BaiduMatchListClient 同注释)
                 .header("Accept", "application/json,text/plain,*/*")
                 .header("Accept-Language", "zh-CN,zh;q=0.9")
                 .get()
@@ -195,22 +257,22 @@ public final class BaiduRankingsClient {
     }
 
     // ============================================================
-    //  球队榜 (跨组按积分排序的 48 队)
+    //  球队榜 (跨组按积分排序)
     // ============================================================
 
     /**
-     * 拉取"球队榜": 把 12 组积分榜 flatten 后, 按 积分 / 净胜球 / 进球数 / 队名 跨组排序
+     * 拉取"球队榜": 把积分榜 flatten 后, 按 积分 / 净胜球 / 进球数 / 队名 跨组排序
      * <p>
-     * 端点: 复用 {@link #fetch()} 那个 <code>/al/match?tab=排名</code> 接口 — Baidu 实际并没有
-     * 一份"全 48 队按积分排"的接口, 球队榜 Tab 返的是 32 项统计榜 (进球/助攻/抢断/...) 而非积分榜.
-     * 这里通过合并 12 组积分数据 + 跨组排序得到用户预期的视图.
-     * <p>
-     * 注: 单组 4 队 × 12 组 = 48 队, 实际上当前赛段可能少于 48 队(部分比赛未开始, 小组未填).
+     * 杯赛 (世界杯) = 12 组 flatten; 联赛 (英超) = 单表原样 (flatten 后即本身).
      *
      * @return 跨组排序后的全部球队, 积分降序. 返回空列表表示无可用数据.
      */
     public List<BaiduRankedTeam> fetchTeamRankings() throws IOException {
-        RankingBundle bundle = fetch();
+        return fetchTeamRankings(DEFAULT_MATCH);
+    }
+
+    public List<BaiduRankedTeam> fetchTeamRankings(String matchName) throws IOException {
+        RankingBundle bundle = fetch(matchName);
         List<BaiduRankedTeam> all = new ArrayList<>();
         for (List<BaiduRankedTeam> group : bundle.groups.values()) {
             if (group == null) continue;

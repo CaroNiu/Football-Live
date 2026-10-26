@@ -1,7 +1,9 @@
 package com.fifa.plugin.ui.toolwindow;
 
 import com.fifa.plugin.api.BaiduLiveMatchClient;
+import com.fifa.plugin.api.BaiduMatchListClient;
 import com.fifa.plugin.api.BaiduSportsClient;
+import com.fifa.plugin.core.LeagueRegistry;
 import com.fifa.plugin.model.Match;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,24 +63,25 @@ public class LivePanel extends JPanel {
         add(top, BorderLayout.NORTH);
 
         // ---- 比赛列表 ----
-        // 6 列显示 + 1 隐藏列存 baiduMatchId
-        String[] columns = {"时间", "主队", "比分", "客队", "状态", "阶段", "baiduMatchId"};
+        // 7 列显示 + 1 隐藏列存 baiduMatchId
+        String[] columns = {"时间", "赛事", "主队", "比分", "客队", "状态", "轮次", "baiduMatchId"};
         matchListModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
         JBTable matchTable = new JBTable(matchListModel);
         matchTable.setRowHeight(24);
-        matchTable.getColumnModel().getColumn(0).setPreferredWidth(60);
-        matchTable.getColumnModel().getColumn(1).setPreferredWidth(140);
-        matchTable.getColumnModel().getColumn(2).setPreferredWidth(50);
-        matchTable.getColumnModel().getColumn(3).setPreferredWidth(140);
-        matchTable.getColumnModel().getColumn(4).setPreferredWidth(80);
-        matchTable.getColumnModel().getColumn(5).setPreferredWidth(120);
+        matchTable.getColumnModel().getColumn(0).setPreferredWidth(55);
+        matchTable.getColumnModel().getColumn(1).setPreferredWidth(65);
+        matchTable.getColumnModel().getColumn(2).setPreferredWidth(120);
+        matchTable.getColumnModel().getColumn(3).setPreferredWidth(50);
+        matchTable.getColumnModel().getColumn(4).setPreferredWidth(120);
+        matchTable.getColumnModel().getColumn(5).setPreferredWidth(80);
+        matchTable.getColumnModel().getColumn(6).setPreferredWidth(110);
         // 隐藏 baiduMatchId 列
-        matchTable.getColumnModel().getColumn(6).setMinWidth(0);
-        matchTable.getColumnModel().getColumn(6).setMaxWidth(0);
-        matchTable.getColumnModel().getColumn(6).setPreferredWidth(0);
+        matchTable.getColumnModel().getColumn(7).setMinWidth(0);
+        matchTable.getColumnModel().getColumn(7).setMaxWidth(0);
+        matchTable.getColumnModel().getColumn(7).setPreferredWidth(0);
 
         // 双击 / 单击 → 弹出详情
         matchTable.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -88,7 +91,7 @@ public class LivePanel extends JPanel {
                     int row = matchTable.rowAtPoint(e.getPoint());
                     if (row < 0) return;
                     int viewRow = matchTable.convertRowIndexToModel(row);
-                    String matchId = (String) matchListModel.getValueAt(viewRow, 6);
+                    String matchId = (String) matchListModel.getValueAt(viewRow, 7);
                     if (matchId == null || matchId.isEmpty()) return;
                     openDetailDialog(matchId);
                 }
@@ -102,70 +105,81 @@ public class LivePanel extends JPanel {
         statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
         add(statusLabel, BorderLayout.SOUTH);
 
+        // 跟随全局赛事切换 (直播列表按所选赛事过滤, 需重新拉取)
+        LeagueRegistry.getInstance().addListener(() -> SwingUtilities.invokeLater(this::loadMatches));
+
         loadMatches();
         scheduler.scheduleWithFixedDelay(this::loadMatches, 60, 60, TimeUnit.SECONDS);
     }
 
     private void loadMatches() {
-        BaiduSportsClient baidu = ApplicationManager.getApplication()
-                .getService(BaiduSportsClient.class);
-        if (baidu == null) return;
-        try {
-            BaiduSportsClient.ScheduleBundle bundle = baidu.fetchSchedule();
-            // 收集正在直播 / 已结束 / 24h 内即将开赛
-            java.util.Date now = new java.util.Date();
-            List<Match> liveOrUpcoming = new ArrayList<>();
-            matchCache.clear();
-            for (Match m : bundle.matches) {
-                String status = m.getStatus() != null ? m.getStatus() : "";
-                if ("IN_PLAY".equals(status) || "FINISHED".equals(status)) {
-                    liveOrUpcoming.add(m);
-                } else if ("SCHEDULED".equals(status) && m.getUtcDate() != null) {
-                    try {
-                        java.time.ZonedDateTime zdt = java.time.ZonedDateTime.parse(m.getUtcDate());
-                        long diff = zdt.toInstant().toEpochMilli() - now.getTime();
-                        if (diff < 24 * 60 * 60 * 1000L) {
-                            liveOrUpcoming.add(m);
-                        }
-                    } catch (Exception ignored) {}
-                }
-            }
-            // 按时间排序
-            liveOrUpcoming.sort((a, b) -> {
-                String ta = a.getUtcDate() != null ? a.getUtcDate() : "";
-                String tb = b.getUtcDate() != null ? b.getUtcDate() : "";
-                return ta.compareTo(tb);
-            });
-
-            SwingUtilities.invokeLater(() -> {
-                matchListModel.setRowCount(0);
-                for (Match m : liveOrUpcoming) {
-                    String home = m.getHomeTeam() != null ? m.getHomeTeam().getShortName() : "?";
-                    String away = m.getAwayTeam() != null ? m.getAwayTeam().getShortName() : "?";
-                    String mid = m.getBaiduMatchId();
-                    if (mid == null || mid.isEmpty()) {
-                        mid = m.getUtcDate() + "|" + home + "|" + away;
+        // 网络 IO 在 pooled 线程 (构造器/刷新按钮可能在 EDT 调用进来)
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            BaiduMatchListClient client = ApplicationManager.getApplication()
+                    .getService(BaiduMatchListClient.class);
+            if (client == null) return;
+            try {
+                BaiduSportsClient.ScheduleBundle bundle = client.fetchAllFootball();
+                // 收集正在直播 / 已结束 / 24h 内即将开赛 (跟随全局赛事过滤)
+                String selected = LeagueRegistry.getInstance().getSelected();
+                java.util.Date now = new java.util.Date();
+                List<Match> liveOrUpcoming = new ArrayList<>();
+                matchCache.clear();
+                for (Match m : bundle.matches) {
+                    if (selected != null && !selected.isEmpty()
+                            && !selected.equals(m.getLeagueName())) continue;
+                    String status = m.getStatus() != null ? m.getStatus() : "";
+                    if ("IN_PLAY".equals(status) || "FINISHED".equals(status)) {
+                        liveOrUpcoming.add(m);
+                    } else if ("SCHEDULED".equals(status) && m.getUtcDate() != null) {
+                        try {
+                            java.time.ZonedDateTime zdt = java.time.ZonedDateTime.parse(m.getUtcDate());
+                            long diff = zdt.toInstant().toEpochMilli() - now.getTime();
+                            if (diff < 24 * 60 * 60 * 1000L) {
+                                liveOrUpcoming.add(m);
+                            }
+                        } catch (Exception ignored) {}
                     }
-                    matchCache.put(mid, m);
-                    matchListModel.addRow(new Object[]{
-                            m.getVenue() != null ? m.getVenue() : "-",
-                            home,
-                            formatScore(m),
-                            away,
-                            formatStatus(m.getStatus()),
-                            formatStage(m.getStage()),
-                            mid
-                    });
                 }
-                if (liveOrUpcoming.isEmpty()) {
-                    setStatus("⚠ 当前无直播 / 即将开赛 / 已结束的比赛");
-                } else {
-                    setStatus("✓ " + liveOrUpcoming.size() + " 场可关注 · " + new java.util.Date());
-                }
-            });
-        } catch (Exception e) {
-            LOG.warn("loadMatches failed", e);
-        }
+                // 按时间排序
+                liveOrUpcoming.sort((a, b) -> {
+                    String ta = a.getUtcDate() != null ? a.getUtcDate() : "";
+                    String tb = b.getUtcDate() != null ? b.getUtcDate() : "";
+                    return ta.compareTo(tb);
+                });
+
+                SwingUtilities.invokeLater(() -> {
+                    matchListModel.setRowCount(0);
+                    for (Match m : liveOrUpcoming) {
+                        String home = m.getHomeTeam() != null ? m.getHomeTeam().getShortName() : "?";
+                        String away = m.getAwayTeam() != null ? m.getAwayTeam().getShortName() : "?";
+                        String mid = m.getBaiduMatchId();
+                        if (mid == null || mid.isEmpty()) {
+                            mid = m.getUtcDate() + "|" + home + "|" + away;
+                        }
+                        matchCache.put(mid, m);
+                        matchListModel.addRow(new Object[]{
+                                m.getVenue() != null ? m.getVenue() : "-",
+                                m.getLeagueName() != null ? m.getLeagueName() : "-",
+                                home,
+                                formatScore(m),
+                                away,
+                                formatStatus(m.getStatus()),
+                                m.getRoundName() != null && !m.getRoundName().isEmpty()
+                                        ? m.getRoundName() : formatStage(m.getStage()),
+                                mid
+                        });
+                    }
+                    if (liveOrUpcoming.isEmpty()) {
+                        setStatus("⚠ 当前无直播 / 即将开赛 / 已结束的比赛");
+                    } else {
+                        setStatus("✓ " + liveOrUpcoming.size() + " 场可关注 · " + new java.util.Date());
+                    }
+                });
+            } catch (Exception e) {
+                LOG.warn("loadMatches failed", e);
+            }
+        });
     }
 
     /**

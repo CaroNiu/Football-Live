@@ -70,13 +70,20 @@ public final class BaiduSportsClient {
     }
 
     /**
-     * 拉取赛程 (从今天起), 返回按日期分组的全部比赛
+     * 拉取赛程 (从今天起), 返回按日期分组的全部比赛 — 默认世界杯
      */
     public ScheduleBundle fetchSchedule() throws IOException {
+        return fetchSchedule(MATCH_NAME);
+    }
+
+    /**
+     * 拉取指定赛事的赛程 (matchName 如 "英超" / "世界杯")
+     */
+    public ScheduleBundle fetchSchedule(String matchName) throws IOException {
         String date = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
         String url = HOST + "/al/api/match/schedules"
                 + "?from=self"
-                + "&match=" + enc(MATCH_NAME)
+                + "&match=" + enc(matchName != null && !matchName.isEmpty() ? matchName : MATCH_NAME)
                 + "&date=" + date
                 + "&direction=after"
                 + "&isAsync=1";
@@ -158,15 +165,13 @@ public final class BaiduSportsClient {
     }
 
     /**
-     * 解析单场比赛 JSON
+     * 解析单场比赛 JSON (百度赛程行, schedules 与首页聚合两种来源同构)
+     * <p>
+     * 不做赛事过滤 — 全赛事聚合时由调用方按 matchType / 选中赛事过滤
      */
-    private Match parseBaiduMatch(JsonElement mEl, String dayDate) {
+    public static Match parseBaiduMatch(JsonElement mEl, String dayDate) {
         if (!mEl.isJsonObject()) return null;
         JsonObject m = mEl.getAsJsonObject();
-
-        // 只保留世界杯
-        String game = m.has("game") && !m.get("game").isJsonNull() ? m.get("game").getAsString() : "";
-        if (game == null || !game.contains("世界杯")) return null;
 
         Match result = new Match();
 
@@ -189,6 +194,13 @@ public final class BaiduSportsClient {
         // 时间 (HH:mm)
         String time = m.has("time") && !m.get("time").isJsonNull() ? m.get("time").getAsString() : null;
         if (time != null) result.setVenue(time);
+
+        // 赛事短名 (game, 如 "英超") + 轮次全名 (matchName, 如 "英超第8轮")
+        String game = m.has("game") && !m.get("game").isJsonNull() ? m.get("game").getAsString() : null;
+        if (game != null && !game.isEmpty()) result.setLeagueName(game);
+        String matchName = m.has("matchName") && !m.get("matchName").isJsonNull()
+                ? m.get("matchName").getAsString() : null;
+        if (matchName != null && !matchName.isEmpty()) result.setRoundName(matchName);
 
         // 阶段
         String stage = m.has("matchStage") && !m.get("matchStage").isJsonNull()
@@ -249,6 +261,19 @@ public final class BaiduSportsClient {
                     h = Integer.parseInt(parts[0].trim());
                     a = Integer.parseInt(parts[1].trim());
                 } catch (Exception ignored) {}
+            }
+        }
+        // 首页聚合行没有 scoreInfo, 队徽对象里带单边比分, 作最后兜底
+        if (h == null && m.has("leftLogo") && !m.get("leftLogo").isJsonNull()) {
+            JsonObject left = m.getAsJsonObject("leftLogo");
+            if (left.has("score") && !left.get("score").isJsonNull()) {
+                try { h = Integer.parseInt(left.get("score").getAsString()); } catch (Exception ignored) {}
+            }
+        }
+        if (a == null && m.has("rightLogo") && !m.get("rightLogo").isJsonNull()) {
+            JsonObject right = m.getAsJsonObject("rightLogo");
+            if (right.has("score") && !right.get("score").isJsonNull()) {
+                try { a = Integer.parseInt(right.get("score").getAsString()); } catch (Exception ignored) {}
             }
         }
         com.fifa.plugin.model.Match.MatchScore ms = new com.fifa.plugin.model.Match.MatchScore();

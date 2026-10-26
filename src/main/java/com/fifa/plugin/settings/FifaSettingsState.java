@@ -22,6 +22,10 @@ public class FifaSettingsState implements PersistentStateComponent<FifaSettingsS
         public boolean enableMatchNotification = true;
         public int liveScorePollIntervalSec = 30;
         public String favoriteTeam = "";       // 关注球队名
+        /** 关注的赛事 (百度赛事名, 如 "英超"); 空则插件用内置默认 */
+        public java.util.List<String> followedLeagues = new java.util.ArrayList<>();
+        /** 上次选中的赛事过滤器; "" = 全部赛事 */
+        public String lastSelectedLeague = "";
     }
 
     private State myState = new State();
@@ -68,5 +72,22 @@ public class FifaSettingsState implements PersistentStateComponent<FifaSettingsS
 
     public void setFavoriteTeam(String team) {
         myState.favoriteTeam = team;
+    }
+
+    public java.util.List<String> getFollowedLeagues() {
+        return myState.followedLeagues == null
+                ? java.util.Collections.emptyList() : myState.followedLeagues;
+    }
+
+    public void setFollowedLeagues(java.util.List<String> leagues) {
+        myState.followedLeagues = new java.util.ArrayList<>(leagues);
+    }
+
+    public String getLastSelectedLeague() {
+        return myState.lastSelectedLeague == null ? "" : myState.lastSelectedLeague;
+    }
+
+    public void setLastSelectedLeague(String league) {
+        myState.lastSelectedLeague = league == null ? "" : league;
     }
 }

@@ -1,6 +1,7 @@
 package com.fifa.plugin.ui.toolwindow;
 
 import com.fifa.plugin.api.BaiduRankingsClient;
+import com.fifa.plugin.core.LeagueRegistry;
 import com.fifa.plugin.model.BaiduRankedTeam;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,42 +61,49 @@ public class TeamRankingPanel extends JPanel {
         statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
         add(statusLabel, BorderLayout.SOUTH);
 
+        // 跟随全局赛事切换
+        LeagueRegistry.getInstance().addListener(() -> SwingUtilities.invokeLater(this::refresh));
+
         refresh();
         scheduler.scheduleWithFixedDelay(this::refresh, 60, 60, TimeUnit.SECONDS);
     }
 
     public void refresh() {
-        BaiduRankingsClient client = ApplicationManager.getApplication()
-                .getService(BaiduRankingsClient.class);
-        if (client == null) return;
+        // 网络 IO 在 pooled 线程 (构造器/监听器可能在 EDT 调用进来)
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            BaiduRankingsClient client = ApplicationManager.getApplication()
+                    .getService(BaiduRankingsClient.class);
+            if (client == null) return;
 
-        try {
-            List<BaiduRankedTeam> rankings = client.fetchTeamRankings();
-            SwingUtilities.invokeLater(() -> {
-                tableModel.setRowCount(0);
-                if (rankings.isEmpty()) {
-                    setStatus("⚠ 暂无球队数据");
-                    return;
-                }
-                int rank = 1;
-                for (BaiduRankedTeam t : rankings) {
-                    int diff = t.goalsFor - t.goalsAgainst;
-                    tableModel.addRow(new Object[]{
-                            rank++,
-                            t.name != null ? t.name : "?",
-                            t.played, t.won, t.draw, t.lost,
-                            t.goalsFor, t.goalsAgainst,
-                            formatDiff(diff),
-                            t.points
-                    });
-                }
-                setStatus("✓ 已加载 " + rankings.size() + " 支球队 · " + new java.util.Date());
-            });
-        } catch (Exception e) {
-            LOG.warn("Team ranking refresh error", e);
-            SwingUtilities.invokeLater(() ->
-                    setStatus("⚠ 拉取失败: " + e.getClass().getSimpleName() + ": " + e.getMessage()));
-        }
+            String league = LeagueRegistry.getInstance().getSelectedOrWorldCup();
+            try {
+                List<BaiduRankedTeam> rankings = client.fetchTeamRankings(league);
+                SwingUtilities.invokeLater(() -> {
+                    tableModel.setRowCount(0);
+                    if (rankings.isEmpty()) {
+                        setStatus("⚠ 暂无 " + league + " 球队数据");
+                        return;
+                    }
+                    int rank = 1;
+                    for (BaiduRankedTeam t : rankings) {
+                        int diff = t.goalsFor - t.goalsAgainst;
+                        tableModel.addRow(new Object[]{
+                                rank++,
+                                t.name != null ? t.name : "?",
+                                t.played, t.won, t.draw, t.lost,
+                                t.goalsFor, t.goalsAgainst,
+                                formatDiff(diff),
+                                t.points
+                        });
+                    }
+                    setStatus("✓ " + league + " · 已加载 " + rankings.size() + " 支球队 · " + new java.util.Date());
+                });
+            } catch (Exception e) {
+                LOG.warn("Team ranking refresh error", e);
+                SwingUtilities.invokeLater(() ->
+                        setStatus("⚠ 拉取失败: " + e.getClass().getSimpleName() + ": " + e.getMessage()));
+            }
+        });
     }
 
     @NotNull

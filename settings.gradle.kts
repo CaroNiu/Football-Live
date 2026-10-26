@@ -1,1 +1,1 @@
-rootProject.name = "FIFA-World-Cup-2026"
+rootProject.name = "Football-Live"
