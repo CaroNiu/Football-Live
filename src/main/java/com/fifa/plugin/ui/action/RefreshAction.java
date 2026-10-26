@@ -1,6 +1,6 @@
 package com.fifa.plugin.ui.action;
 
-import com.fifa.plugin.core.TournamentManager;
+import com.fifa.plugin.core.FootballDataManager;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -15,18 +15,18 @@ public class RefreshAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        TournamentManager tm = ApplicationManager.getApplication()
-                .getService(TournamentManager.class);
+        FootballDataManager dm = ApplicationManager.getApplication()
+                .getService(FootballDataManager.class);
 
-        if (tm == null) return;
+        if (dm == null) return;
 
-        tm.refreshAll();
+        dm.refreshAll();
 
         // 通知用户
         NotificationGroupManager.getInstance()
                 .getNotificationGroup("FIFA.Notification")
                 .createNotification(
-                        "FIFA World Cup 2026",
+                        "足球直播",
                         "数据已刷新 ✓",
                         NotificationType.INFORMATION
                 )

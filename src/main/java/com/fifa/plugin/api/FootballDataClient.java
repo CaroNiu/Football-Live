@@ -437,14 +437,22 @@ public final class FootballDataClient {
     // ============================================================
 
     /**
-     * 拉取 FIFA World Cup 2026 的最新新闻 (来自百度体育)
+     * 拉取足球新闻 (默认关键词"足球", 来自百度体育)
      * <p>
-     * 端点: <code>/al/api/realtime?&amp;pn=10&amp;word=世界杯</code>
+     * 端点: <code>/al/api/realtime?&amp;pn=10&amp;word={keyword}</code>
      * 响应: <pre>{ "data": { "data": [ {title, link, source, endTime, factorTime, img[]} ] } }</pre>
      */
     public List<NewsItem> fetchBaiduNews(int limit) throws IOException {
+        return fetchBaiduNews("足球", limit);
+    }
+
+    /**
+     * 按关键词拉取新闻 (关键词通常是赛事名, 如 "英超" / "世界杯"; 空/null 回退 "足球")
+     */
+    public List<NewsItem> fetchBaiduNews(String keyword, int limit) throws IOException {
         List<NewsItem> out = new ArrayList<>();
-        String url = "https://tiyu.baidu.com/al/api/realtime?&pn=10&word=%E4%B8%96%E7%95%8C%E6%9D%AF";
+        String word = (keyword == null || keyword.isEmpty()) ? "足球" : keyword;
+        String url = "https://tiyu.baidu.com/al/api/realtime?&pn=10&word=" + java.net.URLEncoder.encode(word, java.nio.charset.StandardCharsets.UTF_8);
         Request request = new Request.Builder()
                 .url(url)
                 .header("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148")

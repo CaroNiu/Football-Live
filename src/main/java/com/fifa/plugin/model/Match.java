@@ -69,8 +69,20 @@ public class Match {
     /** 百度体育的 matchId (base64), 用来拉 /al/live/detail */
     private transient String baiduMatchId;
 
+    /** 赛事短名 (百度 game 字段, 如 "英超" / "世界杯"), 全赛事聚合时作过滤键 */
+    private transient String leagueName;
+
+    /** 轮次全名 (百度 matchName, 如 "英超第8轮" / "世界杯小组赛A组第1轮") */
+    private transient String roundName;
+
     public String getBaiduMatchId() { return baiduMatchId; }
     public void setBaiduMatchId(String id) { this.baiduMatchId = id; }
+
+    public String getLeagueName() { return leagueName; }
+    public void setLeagueName(String leagueName) { this.leagueName = leagueName; }
+
+    public String getRoundName() { return roundName; }
+    public void setRoundName(String roundName) { this.roundName = roundName; }
 
     // ---- 直读 getter (供 fallback 使用) ----
 

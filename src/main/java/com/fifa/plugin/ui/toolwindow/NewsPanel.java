@@ -1,11 +1,13 @@
 package com.fifa.plugin.ui.toolwindow;
 
 import com.fifa.plugin.api.FootballDataClient;
+import com.fifa.plugin.core.LeagueRegistry;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,40 +47,47 @@ public class NewsPanel extends JPanel {
         statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
         add(statusLabel, BorderLayout.SOUTH);
 
+        // 跟随全局赛事切换 (新闻关键词跟随)
+        LeagueRegistry.getInstance().addListener(() -> SwingUtilities.invokeLater(this::refresh));
+
         refresh();
         scheduler.scheduleWithFixedDelay(this::refresh, 300, 300, TimeUnit.SECONDS);
     }
 
     public void refresh() {
-        FootballDataClient client = ApplicationManager.getApplication()
-                .getService(FootballDataClient.class);
-        if (client == null) return;
+        // 网络 IO 在 pooled 线程 (构造器/监听器可能在 EDT 调用进来)
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            FootballDataClient client = ApplicationManager.getApplication()
+                    .getService(FootballDataClient.class);
+            if (client == null) return;
 
-        try {
-            List<FootballDataClient.NewsItem> news = client.fetchBaiduNews(20);
-            SwingUtilities.invokeLater(() -> {
-                listPanel.removeAll();
-                if (news.isEmpty()) {
-                    listPanel.add(centerLabel("暂无新闻数据"));
-                } else {
-                    for (FootballDataClient.NewsItem n : news) {
-                        listPanel.add(buildCard(n));
-                        listPanel.add(Box.createVerticalStrut(8));
+            String league = LeagueRegistry.getInstance().getSelected();
+            try {
+                List<FootballDataClient.NewsItem> news = client.fetchBaiduNews(league, 20);
+                SwingUtilities.invokeLater(() -> {
+                    listPanel.removeAll();
+                    if (news.isEmpty()) {
+                        listPanel.add(centerLabel("暂无新闻数据"));
+                    } else {
+                        for (FootballDataClient.NewsItem n : news) {
+                            listPanel.add(buildCard(n));
+                            listPanel.add(Box.createVerticalStrut(8));
+                        }
                     }
-                }
-                listPanel.revalidate();
-                listPanel.repaint();
-                setStatus("✓ 已加载 " + news.size() + " 条新闻 · " + new java.util.Date());
-            });
-        } catch (Exception e) {
-            LOG.warn("News refresh error", e);
-            SwingUtilities.invokeLater(() -> {
-                listPanel.removeAll();
-                listPanel.add(centerLabel("⚠ 拉取失败: " + e.getMessage()));
-                listPanel.revalidate();
-                listPanel.repaint();
-            });
-        }
+                    listPanel.revalidate();
+                    listPanel.repaint();
+                    setStatus("✓ 已加载 " + news.size() + " 条新闻 · " + new java.util.Date());
+                });
+            } catch (Exception e) {
+                LOG.warn("News refresh error", e);
+                SwingUtilities.invokeLater(() -> {
+                    listPanel.removeAll();
+                    listPanel.add(centerLabel("⚠ 拉取失败: " + e.getMessage()));
+                    listPanel.revalidate();
+                    listPanel.repaint();
+                });
+            }
+        });
     }
 
     @NotNull
@@ -144,10 +153,6 @@ public class NewsPanel extends JPanel {
         if (s == null) return "";
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
-
-    @org.jetbrains.annotations.NotNull
-    @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.SOURCE)
-    private @interface NotNull {}
 
     private void setStatus(String text) { statusLabel.setText(text); }
 }

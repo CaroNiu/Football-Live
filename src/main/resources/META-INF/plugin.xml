@@ -1,28 +1,32 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+    <!-- id 保持 worldcup2026 不变 (D1 决策): 已安装用户可平滑升级, 仅展示名改为全赛事定位 -->
     <id>com.fifa.plugin.worldcup2026</id>
-    <name>FIFA World Cup 2026</name>
+    <!-- name 仅允许 ASCII (Marketplace 校验), 中文展示文案放在 UI 层 -->
+    <name>Football Live</name>
     <vendor email="fifa@plugin.dev" url="https://github.com/fifa-worldcup-plugin">FIFA Plugin</vendor>
 
     <!-- 插件图标: IntelliJ Platform 2024.3 移除了 <icon> 元素, 改为自动从 META-INF/pluginIcon.svg 加载 -->
 
     <description><![CDATA[
-        <p>FIFA World Cup 2026 — Live scores, schedules, group standings, FIFA rankings,
-        text-live commentary and news for the 2026 USA-Canada-Mexico World Cup, right inside your IDE.
-        Zero configuration: no API key, no token, no signup required.</p>
+        <p>Football Live — Live scores, schedules, standings, FIFA rankings,
+        text-live commentary and news for ALL football competitions (Premier League, La Liga,
+        Bundesliga, Serie A, Ligue 1, UEFA Champions League, World Cup, CSL and more),
+        right inside your IDE. Zero configuration: no API key, no token, no signup required.</p>
 
-        <p><b>2026 美加墨世界杯实时比分 / 赛程 / 积分榜 / 文字直播 / 新闻 IDEA 插件</b></p>
+        <p><b>全足球赛事实时比分 / 赛程 / 积分榜 / 文字直播 / 新闻 IDEA 插件</b></p>
 
         <p>Data sources: Baidu Sports (tiyu.baidu.com) + TheSportsDB public API.</p>
 
         <h3>Features 功能</h3>
         <ul>
-            <li><b>StatusBar live score</b> — 状态栏实时比分</li>
-            <li><b>Schedule</b> — 按日期切换的世界杯赛程</li>
+            <li><b>StatusBar live score</b> — 状态栏实时比分 (多场进行中自动轮换优先级)</li>
+            <li><b>Schedule</b> — 全部足球赛事近 3 天赛程, 按日期切换, 跨联赛聚合</li>
             <li><b>Live</b> — 直播 / 即将开赛 / 已结束比赛 + 详情弹窗 (分析 + 文字直播)</li>
-            <li><b>Standings</b> — 12 个小组实时积分榜</li>
-            <li><b>Team rankings</b> — 全 48 队跨组排名</li>
+            <li><b>Standings</b> — 积分榜: 杯赛分组 / 联赛单表自适应</li>
+            <li><b>Team rankings</b> — 跨组球队排名</li>
             <li><b>FIFA rankings</b> — FIFA 官方 211 队排名</li>
-            <li><b>News</b> — 世界杯实时新闻卡片流</li>
+            <li><b>News</b> — 实时新闻卡片流 (关键词跟随所选赛事)</li>
+            <li><b>League filter</b> — 全局赛事选择条 + 关注赛事</li>
         </ul>
     ]]></description>
 
@@ -46,7 +50,7 @@
         <applicationConfigurable
                 id="FIFA.Settings"
                 instance="com.fifa.plugin.settings.FifaSettingsConfigurable"
-                displayName="FIFA World Cup 2026" />
+                displayName="足球直播 Football Live" />
 
         <!-- 通知组 -->
         <notificationGroup
@@ -59,6 +63,8 @@
         <applicationService
                 serviceImplementation="com.fifa.plugin.api.BaiduSportsClient" />
         <applicationService
+                serviceImplementation="com.fifa.plugin.api.BaiduMatchListClient" />
+        <applicationService
                 serviceImplementation="com.fifa.plugin.api.BaiduRankingsClient" />
         <applicationService
                 serviceImplementation="com.fifa.plugin.api.BaiduFifaRankingsClient" />
@@ -67,7 +73,9 @@
         <applicationService
                 serviceImplementation="com.fifa.plugin.cache.MatchCache" />
         <applicationService
-                serviceImplementation="com.fifa.plugin.core.TournamentManager" />
+                serviceImplementation="com.fifa.plugin.core.FootballDataManager" />
+        <applicationService
+                serviceImplementation="com.fifa.plugin.core.LeagueRegistry" />
         <applicationService
                 serviceImplementation="com.fifa.plugin.settings.FifaSettingsState" />
 
@@ -80,8 +88,8 @@
         <action
                 id="FIFA.RefreshSchedule"
                 class="com.fifa.plugin.ui.action.RefreshAction"
-                text="Refresh FIFA Data"
-                description="刷新世界杯数据"
+                text="Refresh Football Data"
+                description="刷新足球直播数据"
                 icon="icons/fifaRefresh.svg">
             <add-to-group group-id="ToolsMenu" anchor="last" />
         </action>
