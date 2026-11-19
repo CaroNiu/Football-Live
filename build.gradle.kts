@@ -142,4 +142,13 @@ tasks {
         options.encoding = "UTF-8"
         options.compilerArgs.addAll(listOf("-Xlint:unchecked", "-Xlint:deprecation"))
     }
+
+    // 本地验证: 自动打开指定空项目触发 StatusBar widget install → 全链路轮询
+    // 用法: ./gradlew runIde -PfifaRunProject=<项目路径>  (不带属性则正常启动)
+    runIde {
+        val proj = findProperty("fifaRunProject") as? String
+        if (proj != null) {
+            args(listOf(proj))
+        }
+    }
 }

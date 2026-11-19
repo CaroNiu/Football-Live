@@ -154,6 +154,7 @@ public final class FootballDataManager {
             liveMatches = live;
             todayMatches = today;
             cache.putMatches("all-football", all);
+            LOG.info("poll ok: " + all.size() + " matches (" + live.size() + " live)"); // 沙箱验证可判定性: 成功也留痕
             detectMatchEvents(live, all);
             notifyUiListeners();
         } catch (IOException e) {
@@ -174,7 +175,7 @@ public final class FootballDataManager {
         Set<String> scope = new HashSet<>(LeagueRegistry.getInstance().getFollowed());
         String selected = LeagueRegistry.getInstance().getSelected();
         if (selected != null && !selected.isEmpty()) scope.add(selected);
-        String favoriteTeam = FifaSettingsState.getInstance().getFavoriteTeam();
+        List<String> favoriteTeams = FifaSettingsState.getInstance().getFavoriteTeams();
 
         for (Match m : live) {
             String id = m.getBaiduMatchId();
@@ -198,8 +199,13 @@ public final class FootballDataManager {
             String away = m.getAwayTeam() != null && m.getAwayTeam().getName() != null
                     ? m.getAwayTeam().getName() : "";
             String league = m.getLeagueName() == null ? "" : m.getLeagueName();
-            boolean teamHit = favoriteTeam != null && !favoriteTeam.isEmpty()
-                    && (home.contains(favoriteTeam) || away.contains(favoriteTeam));
+            boolean teamHit = false;
+            for (String t : favoriteTeams) {
+                if (t != null && !t.isEmpty() && (home.contains(t) || away.contains(t))) {
+                    teamHit = true;
+                    break;
+                }
+            }
             boolean leagueHit = scope.contains(league);
             if (!teamHit && !leagueHit) continue;
 

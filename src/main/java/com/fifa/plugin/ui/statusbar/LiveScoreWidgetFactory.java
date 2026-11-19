@@ -166,7 +166,7 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
                 currentText = "⚽ 无进行中的比赛";
                 return;
             }
-            String favoriteTeam = FifaSettingsState.getInstance().getFavoriteTeam();
+            java.util.List<String> favoriteTeams = FifaSettingsState.getInstance().getFavoriteTeams();
             String preferredLeague = LeagueRegistry.getInstance().getSelected();
             String followed = LeagueRegistry.getInstance().getFollowed().isEmpty()
                     ? "" : LeagueRegistry.getInstance().getFollowed().get(0);
@@ -176,8 +176,14 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
                 String home = m.getHomeTeam() != null ? m.getHomeTeam().getName() : "";
                 String away = m.getAwayTeam() != null ? m.getAwayTeam().getName() : "";
                 String league = m.getLeagueName() != null ? m.getLeagueName() : "";
-                if (favoriteTeam != null && !favoriteTeam.isEmpty()
-                        && (home.contains(favoriteTeam) || away.contains(favoriteTeam))) {
+                boolean teamHit = false;
+                for (String t : favoriteTeams) {
+                    if (t != null && !t.isEmpty() && (home.contains(t) || away.contains(t))) {
+                        teamHit = true;
+                        break;
+                    }
+                }
+                if (teamHit) {
                     shown = m;
                     break;
                 }

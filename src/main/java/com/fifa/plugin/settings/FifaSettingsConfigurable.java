@@ -24,7 +24,7 @@ public class FifaSettingsConfigurable implements Configurable {
 
     private JCheckBox showLiveScoreCheck;
     private JCheckBox enableNotificationCheck;
-    private JBTextField favoriteTeamField;
+    private JBTextArea favoriteTeamsField;
     private JBTextArea followedLeaguesField;
 
     @Nls
@@ -82,15 +82,17 @@ public class FifaSettingsConfigurable implements Configurable {
         panel.add(leaguesPanel);
         panel.add(Box.createVerticalStrut(10));
 
-        // 关注球队
-        JPanel favPanel = new JPanel();
-        favPanel.setLayout(new BoxLayout(favPanel, BoxLayout.X_AXIS));
+        // 关注球队 (逗号分隔)
+        JPanel favPanel = new JPanel(new BorderLayout());
         favPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        favPanel.add(new JBLabel("关注球队: "));
-        favoriteTeamField = new JBTextField(20);
-        favPanel.add(favoriteTeamField);
-        favPanel.add(Box.createHorizontalGlue());
-
+        favPanel.add(new JBLabel("关注球队 (逗号分隔, 如: 皇马,巴萨): "), BorderLayout.NORTH);
+        favoriteTeamsField = new JBTextArea(3, 30);
+        favoriteTeamsField.setLineWrap(true);
+        favPanel.add(favoriteTeamsField, BorderLayout.CENTER);
+        JLabel favHint = new JBLabel("  进球/开赛通知与状态栏比分优先展示这些球队");
+        favHint.setFont(favHint.getFont().deriveFont(10f));
+        favHint.setForeground(UIManager.getColor("Label.disabledForeground"));
+        favPanel.add(favHint, BorderLayout.SOUTH);
         panel.add(favPanel);
 
         return panel;
@@ -101,7 +103,7 @@ public class FifaSettingsConfigurable implements Configurable {
         FifaSettingsState.State state = FifaSettingsState.getInstance().getState();
         return showLiveScoreCheck.isSelected() != state.showLiveScoreInStatusBar
                 || enableNotificationCheck.isSelected() != state.enableMatchNotification
-                || !favoriteTeamField.getText().equals(state.favoriteTeam)
+                || !joined(splitCsv(favoriteTeamsField.getText())).equals(joined(state.favoriteTeams))
                 || !joinedFollowed().equals(joined(state.followedLeagues));
     }
 
@@ -110,13 +112,8 @@ public class FifaSettingsConfigurable implements Configurable {
         FifaSettingsState settings = FifaSettingsState.getInstance();
         settings.setShowLiveScoreInStatusBar(showLiveScoreCheck.isSelected());
         settings.setEnableMatchNotification(enableNotificationCheck.isSelected());
-        settings.setFavoriteTeam(favoriteTeamField.getText().trim());
-        List<String> leagues = new ArrayList<>();
-        for (String s : followedLeaguesField.getText().split("[,，]")) {
-            String t = s.trim();
-            if (!t.isEmpty()) leagues.add(t);
-        }
-        settings.setFollowedLeagues(leagues);
+        settings.setFavoriteTeams(splitCsv(favoriteTeamsField.getText()));
+        settings.setFollowedLeagues(splitCsv(followedLeaguesField.getText()));
     }
 
     @Override
@@ -124,8 +121,17 @@ public class FifaSettingsConfigurable implements Configurable {
         FifaSettingsState.State state = FifaSettingsState.getInstance().getState();
         showLiveScoreCheck.setSelected(state.showLiveScoreInStatusBar);
         enableNotificationCheck.setSelected(state.enableMatchNotification);
-        favoriteTeamField.setText(state.favoriteTeam);
+        favoriteTeamsField.setText(joined(FifaSettingsState.getInstance().getFavoriteTeams()));
         followedLeaguesField.setText(joined(state.followedLeagues));
+    }
+
+    private static List<String> splitCsv(String text) {
+        List<String> out = new ArrayList<>();
+        for (String s : text.split("[,，]")) {
+            String t = s.trim();
+            if (!t.isEmpty()) out.add(t);
+        }
+        return out;
     }
 
     private String joinedFollowed() {

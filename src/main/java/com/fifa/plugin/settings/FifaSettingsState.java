@@ -21,7 +21,9 @@ public class FifaSettingsState implements PersistentStateComponent<FifaSettingsS
         public boolean showLiveScoreInStatusBar = true;
         public boolean enableMatchNotification = true;
         public int liveScorePollIntervalSec = 30;
-        public String favoriteTeam = "";       // 关注球队名
+        public String favoriteTeam = "";       // (旧) 关注球队名 — 保留兼容已有配置, 迁移到 favoriteTeams
+        /** 关注球队列表 (如 皇马,巴萨); 通知优先级 / 状态栏比分优先展示 */
+        public java.util.List<String> favoriteTeams = new java.util.ArrayList<>();
         /** 关注的赛事 (百度赛事名, 如 "英超"); 空则插件用内置默认 */
         public java.util.List<String> followedLeagues = new java.util.ArrayList<>();
         /** 上次选中的赛事过滤器; "" = 全部赛事 */
@@ -72,6 +74,21 @@ public class FifaSettingsState implements PersistentStateComponent<FifaSettingsS
 
     public String getFavoriteTeam() {
         return myState.favoriteTeam;
+    }
+
+    /** 关注球队列表 (旧单字段自动迁移: 列表为空且旧值非空时以旧值播种) */
+    public java.util.List<String> getFavoriteTeams() {
+        if ((myState.favoriteTeams == null || myState.favoriteTeams.isEmpty())
+                && myState.favoriteTeam != null && !myState.favoriteTeam.isEmpty()) {
+            return java.util.Collections.singletonList(myState.favoriteTeam);
+        }
+        return myState.favoriteTeams == null ? java.util.Collections.emptyList() : myState.favoriteTeams;
+    }
+
+    public void setFavoriteTeams(java.util.List<String> teams) {
+        myState.favoriteTeams = new java.util.ArrayList<>(teams);
+        // 同步旧字段为第一队, 兼容旧版本读配置
+        myState.favoriteTeam = teams.isEmpty() ? "" : teams.get(0);
     }
 
     public void setFavoriteTeam(String team) {
