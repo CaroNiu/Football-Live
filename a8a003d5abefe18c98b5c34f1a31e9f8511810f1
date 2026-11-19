@@ -1,0 +1,23 @@
+.github/workflows/build-and-publish.yml
+  244e6f98a3da33fb 38-39,81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "a8a003d5abefe18c98b5c34f1a31e9f8511810f1",
+  "prompts": {
+    "244e6f98a3da33fb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1b029a22-cbc3-4a51-9d0c-367c0a1dd8ce",
+        "model": "glm-5.3-flash"
+      },
+      "human_author": "CaroNiu",
+      "messages": [],
+      "total_additions": 12,
+      "total_deletions": 1116,
+      "accepted_lines": 12,
+      "overriden_lines": 0
+    }
+  }
+}
