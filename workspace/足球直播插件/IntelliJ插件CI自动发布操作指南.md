@@ -169,6 +169,21 @@ CI 自动完成：tag/版本一致性校验 → publishPlugin 上传 Marketplace
 6. **tag push 偶发 `remote rejected (failed)`**：瞬时故障，原命令重试一次即成功
 7. **JSON 数据里的 `\/` 转义**：python json.load 自动解转义会掩盖原始字节，插件侧手写解析时
    记得 `.replace("\\/", "/")`（否则拼 URL 拿 404）
+8. **settings.gradle.kts 缺 `pluginManagement.repositories`**（本插件首次 CI 实踩）：IPG 2.x 的
+   buildscript 传递依赖（org.jetbrains:annotations:13.0、undertow-core、structure-*:3.300、
+   plugin-repository-rest-client 等）不在 gradlePluginPortal，只在 Maven Central / JetBrains 仓库。
+   本地构建能过（GRADLE_USER_HOME 的 init 脚本/缓存兜底）但 CI 裸环境必挂，症状 =
+   `Could not find org.jetbrains:annotations:13.0 ... Searched in: plugins.gradle.org/m2`。
+   修法：settings.gradle.kts 补 `pluginManagement { repositories { mavenCentral(); gradlePluginPortal(); JetBrains 仓库 } }`
+   + `dependencyResolutionManagement { repositories { ... } }`（mavenCentral 放 Portal 之前）。
+   教训：新项目接 CI 前先在干净环境（`GRADLE_USER_HOME=$(mktemp -d)`）跑一遍 `./gradlew buildPlugin`
+   再推，本地绿 ≠ CI 绿。
+9. **修完 settings 后第二轮照挂——setup-gradle 负面缓存复用**（紧接上条的第二刀）：Gradle 会把
+   静态版本"查不到"的结果缓存进 `modules-2`，`gradle/actions/setup-gradle@v4` 又会在 run 之间恢复它。
+   症状：加了 mavenCentral 后新 run 依然 `Could not find`，且日志里 4 个仓库的"Searched in"
+   时间戳间隔仅 3ms——**根本没有发起网络请求**。修法：CI 构建与发布命令都加
+   `--refresh-dependencies`（一次性成本，之后缓存里是正面结果）。排查手法：直接看 CI 日志时间戳
+   判断是真下载还是缓存命中。
 
 ## 七、验证与排查
 
