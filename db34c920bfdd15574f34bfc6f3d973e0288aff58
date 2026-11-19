@@ -1,0 +1,31 @@
+build.gradle.kts
+  244e6f98a3da33fb 145-153
+src/main/java/com/fifa/plugin/settings/FifaSettingsState.java
+  244e6f98a3da33fb 24-26,79-93
+src/main/java/com/fifa/plugin/core/FootballDataManager.java
+  244e6f98a3da33fb 157,178,202-208
+src/main/java/com/fifa/plugin/ui/statusbar/LiveScoreWidgetFactory.java
+  244e6f98a3da33fb 169,179-186
+src/main/java/com/fifa/plugin/settings/FifaSettingsConfigurable.java
+  244e6f98a3da33fb 27,85-86,88-95,106,115-116,124,128-136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "db34c920bfdd15574f34bfc6f3d973e0288aff58",
+  "prompts": {
+    "244e6f98a3da33fb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1b029a22-cbc3-4a51-9d0c-367c0a1dd8ce",
+        "model": "glm-5.3-flash"
+      },
+      "human_author": "CaroNiu",
+      "messages": [],
+      "total_additions": 16102,
+      "total_deletions": 2182,
+      "accepted_lines": 15506,
+      "overriden_lines": 0
+    }
+  }
+}
