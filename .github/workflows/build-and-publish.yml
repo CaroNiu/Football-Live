@@ -35,7 +35,8 @@ jobs:
       - name: Build Plugin
         run: |
           chmod +x gradlew
-          ./gradlew buildPlugin --no-daemon --console=plain
+          # --refresh-dependencies: 防 setup-gradle 缓存恢复把首轮的"缺失"负面缓存带回来 (annotations:13.0 等 3ms 假 404)
+          ./gradlew buildPlugin --no-daemon --refresh-dependencies --console=plain
 
       - name: Upload Plugin Artifact
         uses: actions/upload-artifact@v4
@@ -77,7 +78,7 @@ jobs:
           JETBRAINS_MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
         run: |
           chmod +x gradlew
-          ./gradlew publishPlugin --no-daemon --console=plain
+          ./gradlew publishPlugin --no-daemon --refresh-dependencies --console=plain
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
