@@ -7,6 +7,7 @@ import com.fifa.plugin.core.LeagueRegistry;
 import com.fifa.plugin.model.Match;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.fifa.plugin.ui.component.ClickableStatusLabel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
@@ -102,8 +103,7 @@ public class LivePanel extends JPanel {
         add(new JBScrollPane(matchTable), BorderLayout.CENTER);
 
         // ---- 状态栏 ----
-        statusLabel = new JBLabel(" ");
-        statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        statusLabel = new ClickableStatusLabel(this::refresh);
         add(statusLabel, BorderLayout.SOUTH);
 
         // 跟随全局赛事切换 (直播列表按所选赛事过滤, 需重新拉取)

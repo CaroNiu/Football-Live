@@ -3,6 +3,7 @@ package com.fifa.plugin.ui.toolwindow;
 import com.fifa.plugin.api.BaiduFifaRankingsClient;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.fifa.plugin.ui.component.ClickableStatusLabel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
@@ -65,8 +66,7 @@ public class FifaRankingPanel extends JPanel {
         table.getColumnModel().getColumn(3).setPreferredWidth(60);
         add(new JBScrollPane(table), BorderLayout.CENTER);
 
-        statusLabel = new JBLabel(" ");
-        statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        statusLabel = new ClickableStatusLabel(this::refresh);
         add(statusLabel, BorderLayout.SOUTH);
 
         refresh();

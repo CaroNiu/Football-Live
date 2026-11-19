@@ -5,6 +5,7 @@ import com.fifa.plugin.core.LeagueRegistry;
 import com.fifa.plugin.model.BaiduRankedTeam;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.fifa.plugin.ui.component.ClickableStatusLabel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
@@ -58,8 +59,7 @@ public class TeamRankingPanel extends JPanel {
         }
         add(new JBScrollPane(table), BorderLayout.CENTER);
 
-        statusLabel = new JBLabel(" ");
-        statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        statusLabel = new ClickableStatusLabel(this::refresh);
         add(statusLabel, BorderLayout.SOUTH);
 
         // 跟随全局赛事切换

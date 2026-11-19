@@ -6,6 +6,7 @@ import com.fifa.plugin.core.LeagueRegistry;
 import com.fifa.plugin.model.Match;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.fifa.plugin.ui.component.ClickableStatusLabel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
@@ -96,6 +97,31 @@ public class SchedulePanel extends JPanel {
         });
         toolbar.add(dateSelector);
 
+        // 前后日快捷切换: 按钮 + 键盘 ← / → (表格聚焦时方向键仍归表格单元格导航)
+        JButton prevBtn = new JButton("←");
+        prevBtn.setToolTipText("前一天 (快捷键 ←)");
+        prevBtn.setMargin(new Insets(2, 8, 2, 8));
+        prevBtn.addActionListener(e -> shiftDay(-1));
+        toolbar.add(prevBtn);
+        JButton nextBtn = new JButton("→");
+        nextBtn.setToolTipText("后一天 (快捷键 →)");
+        nextBtn.setMargin(new Insets(2, 8, 2, 8));
+        nextBtn.addActionListener(e -> shiftDay(1));
+        toolbar.add(nextBtn);
+
+        javax.swing.InputMap im = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        javax.swing.ActionMap am = getActionMap();
+        im.put(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_LEFT, 0), "fifaPrevDay");
+        im.put(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_RIGHT, 0), "fifaNextDay");
+        am.put("fifaPrevDay", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) { shiftDay(-1); }
+        });
+        am.put("fifaNextDay", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) { shiftDay(1); }
+        });
+
         JButton todayBtn = new JButton("今天");
         todayBtn.addActionListener(e -> {
             LocalDate today = LocalDate.now();
@@ -134,8 +160,7 @@ public class SchedulePanel extends JPanel {
         add(new JBScrollPane(table), BorderLayout.CENTER);
 
         // ---- 状态栏 ----
-        statusLabel = new JBLabel(" ");
-        statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        statusLabel = new ClickableStatusLabel(this::refresh);
         add(statusLabel, BorderLayout.SOUTH);
 
         // 跟随全局赛事切换: 近 3 天从缓存即时重渲染 (零网络); 远日期按新赛事上下文重新懒加载
@@ -173,6 +198,17 @@ public class SchedulePanel extends JPanel {
             List<Match> l = cache.get(date);
             return l == null ? 0 : l.size();
         }
+    }
+
+    /** 日期窗口内前后移动一天 (按钮 / ← → 快捷键共用) */
+    private void shiftDay(int delta) {
+        int idx = dateSelector.getSelectedIndex() + delta;
+        if (idx < 0 || idx >= dateSelector.getItemCount()) {
+            setStatus(delta < 0 ? "⚠ 已是窗口最早日期 (今天-" + WINDOW_DAYS + " 天)"
+                    : "⚠ 已是窗口最晚日期 (今天+" + WINDOW_DAYS + " 天)");
+            return;
+        }
+        dateSelector.setSelectedIndex(idx);
     }
 
     /**

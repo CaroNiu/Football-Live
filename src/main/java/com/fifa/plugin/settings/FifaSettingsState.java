@@ -26,6 +26,10 @@ public class FifaSettingsState implements PersistentStateComponent<FifaSettingsS
         public java.util.List<String> followedLeagues = new java.util.ArrayList<>();
         /** 上次选中的赛事过滤器; "" = 全部赛事 */
         public String lastSelectedLeague = "";
+        /** 首次使用日期 (ISO, 评分引导用); "" = 尚未记录 */
+        public String firstUseDate = "";
+        /** 是否已弹过评分引导 (只弹一次) */
+        public boolean ratingPrompted = false;
     }
 
     private State myState = new State();
@@ -89,5 +93,21 @@ public class FifaSettingsState implements PersistentStateComponent<FifaSettingsS
 
     public void setLastSelectedLeague(String league) {
         myState.lastSelectedLeague = league == null ? "" : league;
+    }
+
+    public String getFirstUseDate() {
+        return myState.firstUseDate == null ? "" : myState.firstUseDate;
+    }
+
+    public void setFirstUseDate(String date) {
+        myState.firstUseDate = date == null ? "" : date;
+    }
+
+    public boolean isRatingPrompted() {
+        return myState.ratingPrompted;
+    }
+
+    public void setRatingPrompted(boolean prompted) {
+        myState.ratingPrompted = prompted;
     }
 }

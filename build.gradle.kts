@@ -127,7 +127,7 @@ intellijPlatform {
 
         vendor {
             name = "CaroNiu"
-            url = "https://github.com/CaroNiu/FIFA-World-Cup-2026"
+            url = "https://github.com/CaroNiu/Football-Live"
         }
     }
 }

@@ -5,6 +5,7 @@ import com.fifa.plugin.core.LeagueRegistry;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.fifa.plugin.ui.component.ClickableStatusLabel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +44,7 @@ public class NewsPanel extends JPanel {
         listPanel.setBackground(UIManager.getColor("Panel.background"));
         add(new JBScrollPane(listPanel), BorderLayout.CENTER);
 
-        statusLabel = new JBLabel(" ");
-        statusLabel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        statusLabel = new ClickableStatusLabel(this::refresh);
         add(statusLabel, BorderLayout.SOUTH);
 
         // 跟随全局赛事切换 (新闻关键词跟随)

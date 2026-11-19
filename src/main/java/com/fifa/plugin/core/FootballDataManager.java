@@ -73,6 +73,7 @@ public final class FootballDataManager {
         refreshAll();
         if (pollingStarted) return;
         pollingStarted = true;
+        maybePromptRating();
         // 60s: 单请求覆盖 live + 今日 + 近 3 天赛程
         scheduler.scheduleWithFixedDelay(() -> {
             try {
@@ -81,6 +82,48 @@ public final class FootballDataManager {
                 LOG.warn("Failed to refresh all football data", e);
             }
         }, 60, 60, TimeUnit.SECONDS);
+    }
+
+    // ---- 评分引导 (一次性, 使用满 7 天后弹一次) ----
+
+    /**
+     * 首次运行记录起始日期; 满 7 天且未弹过时温和提示一次去 Marketplace 评分。
+     * 只弹一次 (ratingPrompted 持久化), 不重复骚扰。
+     */
+    private void maybePromptRating() {
+        try {
+            FifaSettingsState settings = FifaSettingsState.getInstance();
+            if (settings.isRatingPrompted()) return;
+            java.time.LocalDate today = java.time.LocalDate.now();
+            String first = settings.getFirstUseDate();
+            if (first.isEmpty()) {
+                settings.setFirstUseDate(today.toString());
+                return;
+            }
+            long days = java.time.temporal.ChronoUnit.DAYS.between(
+                    java.time.LocalDate.parse(first), today);
+            if (days < 7) return;
+            settings.setRatingPrompted(true);
+            Notification n = NotificationGroupManager.getInstance()
+                    .getNotificationGroup("FIFA.Notification")
+                    .createNotification("⚽ 用 Football Live 一周了",
+                            "如果它陪你看了几场好球, 去 Marketplace 给个评价吧 — 这对独立插件很重要",
+                            NotificationType.INFORMATION);
+            n.addAction(new AnAction("打开 Marketplace") {
+                @Override
+                public void actionPerformed(@NotNull AnActionEvent e) {
+                    try {
+                        java.awt.Desktop.getDesktop().browse(new java.net.URI(
+                                "https://plugins.jetbrains.com/search?search=Football+Live&plugins=true"));
+                    } catch (Exception ex) {
+                        LOG.warn("open marketplace failed", ex);
+                    }
+                }
+            });
+            n.notify(null);
+        } catch (Exception ex) {
+            LOG.warn("rating prompt failed", ex);
+        }
     }
 
     /**
