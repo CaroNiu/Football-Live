@@ -59,6 +59,8 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
 
         private String currentText = "⚽";
         private @Nullable StatusBar myStatusBar;
+        /** 轮询完成 → 自动重绘 (保持引用以便 dispose 时反注册) */
+        private final Runnable uiRefreshCallback = this::update;
 
         @Override
         public @NotNull String ID() {
@@ -73,16 +75,23 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
         @Override
         public void install(@NotNull StatusBar statusBar) {
             this.myStatusBar = statusBar;
-            // 启动轮询
             FootballDataManager dm = ApplicationManager.getApplication()
                     .getService(FootballDataManager.class);
             if (dm != null) {
                 dm.startPolling();
+                // 轮询完成自动刷新文本 (不必再手动点击)
+                dm.addUiRefreshListener(uiRefreshCallback);
             }
+            update();
         }
 
         @Override
         public void dispose() {
+            FootballDataManager dm = ApplicationManager.getApplication()
+                    .getService(FootballDataManager.class);
+            if (dm != null) {
+                dm.removeUiRefreshListener(uiRefreshCallback);
+            }
             this.myStatusBar = null;
         }
 
@@ -101,14 +110,25 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
         @Nullable
         @Override
         public String getTooltipText() {
-            return "足球直播比分 - 点击刷新";
+            return "足球直播比分 - 点击打开直播 Tab";
         }
 
         @Nullable
         @Override
         public Consumer<MouseEvent> getClickConsumer() {
             return event -> {
-                // 点击时刷新数据
+                // 点击: 打开工具窗直播 Tab + 顺手刷新
+                com.intellij.openapi.project.Project project = com.intellij.ide.DataManager.getInstance()
+                        .getDataContext(event.getComponent())
+                        .getData(com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT);
+                if (project != null) {
+                    com.intellij.openapi.wm.ToolWindow tw = com.intellij.openapi.wm.ToolWindowManager.getInstance(project)
+                            .getToolWindow("FIFA");
+                    if (tw != null) {
+                        tw.activate(() ->
+                                com.fifa.plugin.ui.toolwindow.FifaToolWindowFactory.showLiveTab(project));
+                    }
+                }
                 FootballDataManager dm = ApplicationManager.getApplication()
                         .getService(FootballDataManager.class);
                 if (dm != null) {

@@ -49,6 +49,7 @@ public class TeamRankingPanel extends JPanel {
         };
         table = new JBTable(tableModel);
         table.setFillsViewportHeight(true);
+        table.setAutoCreateRowSorter(true); // 列头点击排序 (积分/净胜球等数值列按数值比)
         table.setRowHeight(24);
         table.getColumnModel().getColumn(0).setPreferredWidth(40);
         table.getColumnModel().getColumn(1).setPreferredWidth(220);

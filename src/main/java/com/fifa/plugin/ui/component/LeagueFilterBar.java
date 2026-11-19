@@ -2,6 +2,7 @@ package com.fifa.plugin.ui.component;
 
 import com.fifa.plugin.core.LeagueRegistry;
 import com.fifa.plugin.model.League;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.components.JBLabel;
 
 import javax.swing.*;
@@ -28,6 +29,8 @@ public class LeagueFilterBar extends JPanel {
         combo = new JComboBox<>();
         combo.setPrototypeDisplayValue("江苏城市足球联赛"); // 控制宽度, 避免长赛事名撑开
         combo.setPreferredSize(new Dimension(200, 28));
+        // 88+ 赛事键入即搜 (聚焦下拉后直接打字, 如 "英超" / "欧冠")
+        ComboboxSpeedSearch.installOn(combo);
         combo.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,

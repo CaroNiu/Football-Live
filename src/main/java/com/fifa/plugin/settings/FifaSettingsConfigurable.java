@@ -63,7 +63,7 @@ public class FifaSettingsConfigurable implements Configurable {
         panel.add(Box.createVerticalStrut(10));
 
         // 通知开关
-        enableNotificationCheck = new JCheckBox("比赛开始时发送通知提醒");
+        enableNotificationCheck = new JCheckBox("进球 / 开赛通知 (关注赛事与关注球队)");
         enableNotificationCheck.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(enableNotificationCheck);
         panel.add(Box.createVerticalStrut(10));

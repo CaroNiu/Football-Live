@@ -70,6 +70,7 @@ public class LivePanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         JBTable matchTable = new JBTable(matchListModel);
+        matchTable.setAutoCreateRowSorter(true); // 列头点击排序
         matchTable.setRowHeight(24);
         matchTable.getColumnModel().getColumn(0).setPreferredWidth(55);
         matchTable.getColumnModel().getColumn(1).setPreferredWidth(65);

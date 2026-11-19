@@ -80,12 +80,22 @@ public final class BaiduSportsClient {
      * 拉取指定赛事的赛程 (matchName 如 "英超" / "世界杯")
      */
     public ScheduleBundle fetchSchedule(String matchName) throws IOException {
-        String date = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        return fetchSchedule(matchName, LocalDate.now(), "after");
+    }
+
+    /**
+     * 拉取指定赛事自某日起的赛程 (实测支持任意日期, 含过去日期; 返回该日起的多个比赛日)
+     *
+     * @param matchName 赛事名, 如 "英超" — 不支持 "全部赛事" (服务端 500)
+     * @param date      起始日期 (返回包含该日的比赛及之后的比赛日)
+     * @param direction "after" / "before" (实测 after 对过去日期同样生效, 统一用 after)
+     */
+    public ScheduleBundle fetchSchedule(String matchName, LocalDate date, String direction) throws IOException {
         String url = HOST + "/al/api/match/schedules"
                 + "?from=self"
                 + "&match=" + enc(matchName != null && !matchName.isEmpty() ? matchName : MATCH_NAME)
-                + "&date=" + date
-                + "&direction=after"
+                + "&date=" + date.format(DateTimeFormatter.ISO_LOCAL_DATE)
+                + "&direction=" + (direction != null && !direction.isEmpty() ? direction : "after")
                 + "&isAsync=1";
 
         String body = httpGet(url);

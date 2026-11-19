@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * 足球直播工具窗口 - 单页面 5 Tab (全赛事版)
@@ -24,6 +26,22 @@ import java.awt.*;
  * 5. 新闻    - 百度体育实时新闻 (关键词跟随所选赛事)
  */
 public class FifaToolWindowFactory implements ToolWindowFactory {
+
+    /** project → Tab 容器 (供状态栏 widget 点击跳转直播 Tab; WeakHashMap 防泄漏) */
+    private static final Map<Project, JTabbedPane> PROJECT_TABS = new WeakHashMap<>();
+
+    /** 直播 Tab 下标 (与 addTab 顺序一致) */
+    private static final int LIVE_TAB_INDEX = 1;
+
+    /**
+     * 选中直播 Tab (工具窗未初始化时静默忽略 — activate 回调阶段会再试一次)
+     */
+    public static void showLiveTab(@NotNull Project project) {
+        JTabbedPane tabs = PROJECT_TABS.get(project);
+        if (tabs != null) {
+            tabs.setSelectedIndex(LIVE_TAB_INDEX);
+        }
+    }
 
     private SchedulePanel schedulePanel;
     private TeamRankingPanel teamRankingPanel;
@@ -68,6 +86,7 @@ public class FifaToolWindowFactory implements ToolWindowFactory {
         tabs.addTab("FIFA排名", fifaRankingPanel);
         tabs.addTab("新闻", newsPanel);
         root.add(tabs, BorderLayout.CENTER);
+        PROJECT_TABS.put(project, tabs);
 
         // 单按钮触发当前可见 Tab 刷新
         refreshButton.addActionListener(e -> {

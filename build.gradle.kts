@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.fifa.plugin"
-version = "4.0.0"
+version = "4.1.0"
 
 repositories {
     mavenCentral()
@@ -40,8 +40,15 @@ intellijPlatform {
         }
     }
 
+    // CI 发布: token 走环境变量 (GitHub Actions workflow 注入), 本地无此变量时 publishPlugin 会报缺失
+    publishing {
+        token = providers.environmentVariable("JETBRAINS_MARKETPLACE_TOKEN")
+    }
+
     pluginConfiguration {
         name = "Football Live"
+        // 与项目 version 联动 (发版同步点: build.gradle.kts version + changeNotes 条目)
+        version = project.version.toString()
         ideaVersion {
             sinceBuild = "243"
             untilBuild = "253.*"
@@ -70,6 +77,16 @@ intellijPlatform {
         """.trimIndent()
 
         changeNotes = """
+            <h3>4.1.0 — 进球通知与体验优化</h3>
+            <ul>
+                <li><b>进球 / 开赛 BALLOON 通知</b> — 关注赛事与关注球队进球、开赛自动提醒, 通知可直接跳转直播 Tab</li>
+                <li><b>赛程日期窗口扩展</b> — 从仅昨天/今天/明天扩展为前后各 7 天 (远日期按需加载, 支持全部赛事聚合视图)</li>
+                <li><b>状态栏比分自动刷新</b> — 比分变化 60 秒内自动更新, 不再需要手动点击</li>
+                <li><b>点击状态栏比分直达直播 Tab</b></li>
+                <li>表格列头点击排序 (赛程 / 直播 / 球队榜 / FIFA排名)</li>
+                <li>赛事选择条支持键入快速过滤 (88+ 赛事)</li>
+            </ul>
+
             <h3>4.0.0 — 全赛事足球直播</h3>
             <ul>
                 <li>从世界杯单赛事升级为全部足球赛事: 五大联赛 / 欧冠 / 中超 / 世界杯等 (百度全赛事聚合数据源)</li>
@@ -109,8 +126,8 @@ intellijPlatform {
         """.trimIndent()
 
         vendor {
-            name = "FIFA Plugin"
-            url = "https://github.com/fifa-worldcup-plugin"
+            name = "CaroNiu"
+            url = "https://github.com/CaroNiu/FIFA-World-Cup-2026"
         }
     }
 }
@@ -124,10 +141,5 @@ tasks {
     withType<JavaCompile> {
         options.encoding = "UTF-8"
         options.compilerArgs.addAll(listOf("-Xlint:unchecked", "-Xlint:deprecation"))
-    }
-
-    // TEMP-TEST: runIde 自动打开空项目, 触发 StatusBar widget install → 全链路轮询 (验证完删除)
-    runIde {
-        args(listOf("D:/testProject/fifa/FIFA/build/idea-sandbox/test-project"))
     }
 }
