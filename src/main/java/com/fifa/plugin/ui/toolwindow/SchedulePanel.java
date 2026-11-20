@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,6 +65,10 @@ public class SchedulePanel extends JPanel {
     private final Set<LocalDate> inFlight = new HashSet<>();
     /** 当前展示的日期 (赛事切换时从缓存即时重渲染) */
     private LocalDate currentDate;
+    /** 球队过滤 (球队榜点击跳转进入; "" = 不过滤) */
+    private volatile String teamFilter = "";
+    /** 球队过滤清除按钮 (仅过滤激活时可见) */
+    private final JButton clearTeamBtn = new JButton();
 
     public SchedulePanel() {
         setLayout(new BorderLayout());
@@ -138,6 +143,13 @@ public class SchedulePanel extends JPanel {
         refreshBtn.addActionListener(e -> refresh());
         toolbar.add(refreshBtn);
 
+        // 球队过滤 chip (球队榜点击跳转进入时出现, 点击清除)
+        clearTeamBtn.setVisible(false);
+        clearTeamBtn.setToolTipText("清除球队过滤");
+        clearTeamBtn.setMargin(new Insets(2, 8, 2, 8));
+        clearTeamBtn.addActionListener(e -> setTeamFilter(""));
+        toolbar.add(clearTeamBtn);
+
         add(toolbar, BorderLayout.NORTH);
 
         // ---- 表格 ----
@@ -170,7 +182,7 @@ public class SchedulePanel extends JPanel {
 
         rebuildDateSelector();
         loadAndShow();
-        scheduler.scheduleWithFixedDelay(this::loadAndShow, 30, 30, TimeUnit.SECONDS);
+        pollFuture = scheduler.scheduleWithFixedDelay(this::loadAndShow, 30, 30, TimeUnit.SECONDS);
     }
 
     /** 重建日期下拉: 今天前后各 7 天, suffix = 周几 */
@@ -198,6 +210,14 @@ public class SchedulePanel extends JPanel {
             List<Match> l = cache.get(date);
             return l == null ? 0 : l.size();
         }
+    }
+
+    /** 球队榜跳转: 按球队过滤赛程 (空串清除); 与赛事过滤叠加, 换日期/赛事后仍生效 */
+    public void setTeamFilter(String team) {
+        teamFilter = team == null ? "" : team;
+        clearTeamBtn.setText(teamFilter.isEmpty() ? "" : "✕ 球队: " + teamFilter);
+        clearTeamBtn.setVisible(!teamFilter.isEmpty());
+        if (currentDate != null) showForDate(currentDate);
     }
 
     /** 日期窗口内前后移动一天 (按钮 / ← → 快捷键共用) */
@@ -391,13 +411,22 @@ public class SchedulePanel extends JPanel {
         tableModel.setRowCount(0);
         List<Match> filtered = new ArrayList<>();
         for (Match m : matches) {
-            if (selected == null || selected.isEmpty() || selected.equals(m.getLeagueName())) {
-                filtered.add(m);
+            if (selected != null && !selected.isEmpty() && !selected.equals(m.getLeagueName())) {
+                continue;
             }
+            if (!teamFilter.isEmpty()) {
+                String home = m.getHomeTeam() != null && m.getHomeTeam().getShortName() != null
+                        ? m.getHomeTeam().getShortName() : "";
+                String away = m.getAwayTeam() != null && m.getAwayTeam().getShortName() != null
+                        ? m.getAwayTeam().getShortName() : "";
+                if (!(home.contains(teamFilter) || away.contains(teamFilter))) continue;
+            }
+            filtered.add(m);
         }
         if (filtered.isEmpty()) {
             String scope = (selected == null || selected.isEmpty()) ? "" : " · 所选赛事";
-            setStatus("⚠ " + date + scope + "当日无比赛" + (fromCache ? "" : " (或数据未覆盖)"));
+            String teamScope = teamFilter.isEmpty() ? "" : " · 球队 " + teamFilter;
+            setStatus("⚠ " + date + scope + teamScope + "当日无比赛" + (fromCache ? "" : " (或数据未覆盖)"));
             return;
         }
         filtered.sort((x, y) -> {
@@ -417,7 +446,8 @@ public class SchedulePanel extends JPanel {
             });
         }
         setStatus("✓ " + date + " · " + filtered.size() + " 场比赛"
-                + (selected == null || selected.isEmpty() ? "" : " · " + selected));
+                + (selected == null || selected.isEmpty() ? "" : " · " + selected)
+                + (teamFilter.isEmpty() ? "" : " · 球队 " + teamFilter));
     }
 
     /**
@@ -452,6 +482,20 @@ public class SchedulePanel extends JPanel {
             default -> status;
         };
     }
+
+    /** 工具窗可见性联动: 隐藏暂停轮询, 显示恢复并立即刷新一次 */
+    public void setPollingActive(boolean active) {
+        if (active) {
+            if (pollFuture == null || pollFuture.isCancelled()) {
+                pollFuture = scheduler.scheduleWithFixedDelay(this::loadAndShow, 0, 30, TimeUnit.SECONDS);
+            }
+        } else if (pollFuture != null) {
+            pollFuture.cancel(false);
+            pollFuture = null;
+        }
+    }
+
+    private volatile ScheduledFuture<?> pollFuture;
 
     private void setStatus(String text) { statusLabel.setText(text); }
 }

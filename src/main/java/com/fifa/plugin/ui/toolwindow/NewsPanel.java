@@ -17,6 +17,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,7 +52,7 @@ public class NewsPanel extends JPanel {
         LeagueRegistry.getInstance().addListener(() -> SwingUtilities.invokeLater(this::refresh));
 
         refresh();
-        scheduler.scheduleWithFixedDelay(this::refresh, 300, 300, TimeUnit.SECONDS);
+        pollFuture = scheduler.scheduleWithFixedDelay(this::refresh, 300, 300, TimeUnit.SECONDS);
     }
 
     public void refresh() {
@@ -153,6 +154,20 @@ public class NewsPanel extends JPanel {
         if (s == null) return "";
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
+
+    /** 工具窗可见性联动: 隐藏暂停轮询, 显示恢复并立即刷新一次 */
+    public void setPollingActive(boolean active) {
+        if (active) {
+            if (pollFuture == null || pollFuture.isCancelled()) {
+                pollFuture = scheduler.scheduleWithFixedDelay(this::refresh, 0, 300, TimeUnit.SECONDS);
+            }
+        } else if (pollFuture != null) {
+            pollFuture.cancel(false);
+            pollFuture = null;
+        }
+    }
+
+    private volatile ScheduledFuture<?> pollFuture;
 
     private void setStatus(String text) { statusLabel.setText(text); }
 }

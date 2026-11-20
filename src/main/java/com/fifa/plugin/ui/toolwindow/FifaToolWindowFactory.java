@@ -88,6 +88,35 @@ public class FifaToolWindowFactory implements ToolWindowFactory {
         root.add(tabs, BorderLayout.CENTER);
         PROJECT_TABS.put(project, tabs);
 
+        // 球队榜点击球队 → 跳赛程 Tab 并按球队过滤 (同窗口内面板互调, 无需 project)
+        teamRankingPanel.setTeamClickListener(team -> {
+            tabs.setSelectedIndex(0);
+            schedulePanel.setTeamFilter(team);
+        });
+
+        // 面板轮询跟随工具窗可见性: 隐藏暂停, 显示恢复 (含立即刷新)
+        // 2024.3 API: ToolWindowManagerListener 在 wm.ex 包, 事件走 stateChanged 三参重载
+        com.intellij.openapi.wm.ex.ToolWindowManagerEx.getInstanceEx(project)
+                .addToolWindowManagerListener(new com.intellij.openapi.wm.ex.ToolWindowManagerListener() {
+                    @Override
+                    public void stateChanged(@NotNull com.intellij.openapi.wm.ToolWindowManager manager,
+                                             @NotNull com.intellij.openapi.wm.ToolWindow window,
+                                             @NotNull com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType type) {
+                        if (!"FIFA".equals(window.getId())) return;
+                        boolean activate = type == com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.ActivateToolWindow;
+                        boolean hide = type == com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.HideToolWindow;
+                        if (!activate && !hide) return;
+                        if (schedulePanel == null) return; // 首次激活时内容尚未创建
+                        com.intellij.openapi.diagnostic.Logger.getInstance(FifaToolWindowFactory.class)
+                                .info("toolwindow " + type + " → pollers " + (activate ? "resumed" : "paused"));
+                        schedulePanel.setPollingActive(activate);
+                        livePanel.setPollingActive(activate);
+                        teamRankingPanel.setPollingActive(activate);
+                        fifaRankingPanel.setPollingActive(activate);
+                        newsPanel.setPollingActive(activate);
+                    }
+                });
+
         // 单按钮触发当前可见 Tab 刷新
         refreshButton.addActionListener(e -> {
             int idx = tabs.getSelectedIndex();

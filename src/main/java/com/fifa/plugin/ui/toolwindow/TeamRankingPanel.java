@@ -17,6 +17,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -59,6 +60,18 @@ public class TeamRankingPanel extends JPanel {
         }
         add(new JBScrollPane(table), BorderLayout.CENTER);
 
+        // 点击球队行 → 回调 (由工厂接线: 跳赛程 Tab 按球队过滤)
+        table.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                int row = table.getSelectedRow();
+                if (row < 0 || teamClickListener == null) return;
+                int modelRow = table.convertRowIndexToModel(row); // 兼容列头排序后的视图行
+                String team = String.valueOf(tableModel.getValueAt(modelRow, 1));
+                if (!team.isEmpty() && !"?".equals(team)) teamClickListener.accept(team);
+            }
+        });
+
         statusLabel = new ClickableStatusLabel(this::refresh);
         add(statusLabel, BorderLayout.SOUTH);
 
@@ -66,8 +79,15 @@ public class TeamRankingPanel extends JPanel {
         LeagueRegistry.getInstance().addListener(() -> SwingUtilities.invokeLater(this::refresh));
 
         refresh();
-        scheduler.scheduleWithFixedDelay(this::refresh, 60, 60, TimeUnit.SECONDS);
+        pollFuture = scheduler.scheduleWithFixedDelay(this::refresh, 60, 60, TimeUnit.SECONDS);
     }
+
+    /** 球队点击回调 (工厂注入; null = 不响应点击) */
+    public void setTeamClickListener(java.util.function.Consumer<String> listener) {
+        this.teamClickListener = listener;
+    }
+
+    private volatile java.util.function.Consumer<String> teamClickListener;
 
     public void refresh() {
         // 网络 IO 在 pooled 线程 (构造器/监听器可能在 EDT 调用进来)
@@ -111,6 +131,20 @@ public class TeamRankingPanel extends JPanel {
     private static String formatDiff(int d) {
         return d > 0 ? "+" + d : String.valueOf(d);
     }
+
+    /** 工具窗可见性联动: 隐藏暂停轮询, 显示恢复并立即刷新一次 */
+    public void setPollingActive(boolean active) {
+        if (active) {
+            if (pollFuture == null || pollFuture.isCancelled()) {
+                pollFuture = scheduler.scheduleWithFixedDelay(this::refresh, 0, 60, TimeUnit.SECONDS);
+            }
+        } else if (pollFuture != null) {
+            pollFuture.cancel(false);
+            pollFuture = null;
+        }
+    }
+
+    private volatile ScheduledFuture<?> pollFuture;
 
     private void setStatus(String text) { statusLabel.setText(text); }
 }

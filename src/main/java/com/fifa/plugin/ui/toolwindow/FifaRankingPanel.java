@@ -16,6 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -70,7 +71,7 @@ public class FifaRankingPanel extends JPanel {
         add(statusLabel, BorderLayout.SOUTH);
 
         refresh();
-        scheduler.scheduleWithFixedDelay(this::refresh, 30, 30, TimeUnit.MINUTES);
+        pollFuture = scheduler.scheduleWithFixedDelay(this::refresh, 30, 30, TimeUnit.MINUTES);
     }
 
     public void refresh() {
@@ -111,6 +112,20 @@ public class FifaRankingPanel extends JPanel {
         if (s.startsWith("-")) return "↓" + s.substring(1);
         return s;
     }
+
+    /** 工具窗可见性联动: 隐藏暂停轮询, 显示恢复并立即刷新一次 */
+    public void setPollingActive(boolean active) {
+        if (active) {
+            if (pollFuture == null || pollFuture.isCancelled()) {
+                pollFuture = scheduler.scheduleWithFixedDelay(this::refresh, 0, 30, TimeUnit.MINUTES);
+            }
+        } else if (pollFuture != null) {
+            pollFuture.cancel(false);
+            pollFuture = null;
+        }
+    }
+
+    private volatile ScheduledFuture<?> pollFuture;
 
     private void setStatus(String text) { statusLabel.setText(text); }
 }
