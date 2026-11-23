@@ -17,7 +17,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,8 +51,27 @@ public class NewsPanel extends JPanel {
         LeagueRegistry.getInstance().addListener(() -> SwingUtilities.invokeLater(this::refresh));
 
         refresh();
-        pollFuture = scheduler.scheduleWithFixedDelay(this::refresh, 300, 300, TimeUnit.SECONDS);
+        scheduler.scheduleWithFixedDelay(() -> { if (visibilityGate.getAsBoolean()) refresh(); }, 300, 300, TimeUnit.SECONDS);
     }
+
+    /** 工具窗可见性闸门 (工厂注入 toolWindow::isVisible): 隐藏时轮询空转省资源 */
+    public void setVisibilityGate(java.util.function.BooleanSupplier gate) {
+        visibilityGate = gate;
+        if (showRefreshListener == null) {
+            showRefreshListener = new javax.swing.event.AncestorListener() {
+                @Override
+                public void ancestorAdded(javax.swing.event.AncestorEvent e) { refresh(); } // 重新显示立即补一次刷新
+                @Override
+                public void ancestorRemoved(javax.swing.event.AncestorEvent e) {}
+                @Override
+                public void ancestorMoved(javax.swing.event.AncestorEvent e) {}
+            };
+            addAncestorListener(showRefreshListener);
+        }
+    }
+
+    private volatile java.util.function.BooleanSupplier visibilityGate = () -> true;
+    private javax.swing.event.AncestorListener showRefreshListener;
 
     public void refresh() {
         // 网络 IO 在 pooled 线程 (构造器/监听器可能在 EDT 调用进来)
@@ -155,19 +173,6 @@ public class NewsPanel extends JPanel {
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
-    /** 工具窗可见性联动: 隐藏暂停轮询, 显示恢复并立即刷新一次 */
-    public void setPollingActive(boolean active) {
-        if (active) {
-            if (pollFuture == null || pollFuture.isCancelled()) {
-                pollFuture = scheduler.scheduleWithFixedDelay(this::refresh, 0, 300, TimeUnit.SECONDS);
-            }
-        } else if (pollFuture != null) {
-            pollFuture.cancel(false);
-            pollFuture = null;
-        }
-    }
-
-    private volatile ScheduledFuture<?> pollFuture;
 
     private void setStatus(String text) { statusLabel.setText(text); }
 }

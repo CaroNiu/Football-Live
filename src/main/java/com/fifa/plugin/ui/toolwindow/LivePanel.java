@@ -20,7 +20,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -111,7 +110,7 @@ public class LivePanel extends JPanel {
         LeagueRegistry.getInstance().addListener(() -> SwingUtilities.invokeLater(this::loadMatches));
 
         loadMatches();
-        pollFuture = scheduler.scheduleWithFixedDelay(this::loadMatches, 60, 60, TimeUnit.SECONDS);
+        scheduler.scheduleWithFixedDelay(() -> { if (visibilityGate.getAsBoolean()) loadMatches(); }, 60, 60, TimeUnit.SECONDS);
     }
 
     private void loadMatches() {
@@ -282,23 +281,29 @@ public class LivePanel extends JPanel {
         };
     }
 
+    /** 工具窗可见性闸门 (工厂注入 toolWindow::isVisible): 隐藏时轮询空转省资源 */
+    public void setVisibilityGate(java.util.function.BooleanSupplier gate) {
+        visibilityGate = gate;
+        if (showRefreshListener == null) {
+            showRefreshListener = new javax.swing.event.AncestorListener() {
+                @Override
+                public void ancestorAdded(javax.swing.event.AncestorEvent e) { loadMatches(); } // 重新显示立即补一次刷新
+                @Override
+                public void ancestorRemoved(javax.swing.event.AncestorEvent e) {}
+                @Override
+                public void ancestorMoved(javax.swing.event.AncestorEvent e) {}
+            };
+            addAncestorListener(showRefreshListener);
+        }
+    }
+
+    private volatile java.util.function.BooleanSupplier visibilityGate = () -> true;
+    private javax.swing.event.AncestorListener showRefreshListener;
+
     public void refresh() {
         loadMatches();
     }
 
-    /** 工具窗可见性联动: 隐藏暂停轮询, 显示恢复并立即刷新一次 */
-    public void setPollingActive(boolean active) {
-        if (active) {
-            if (pollFuture == null || pollFuture.isCancelled()) {
-                pollFuture = scheduler.scheduleWithFixedDelay(this::loadMatches, 0, 60, TimeUnit.SECONDS);
-            }
-        } else if (pollFuture != null) {
-            pollFuture.cancel(false);
-            pollFuture = null;
-        }
-    }
-
-    private volatile ScheduledFuture<?> pollFuture;
 
     private void setStatus(String text) { statusLabel.setText(text); }
 }

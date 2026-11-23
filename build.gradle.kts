@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.fifa.plugin"
-version = "4.2.0"
+version = "4.2.1"
 
 repositories {
     mavenCentral()
@@ -77,6 +77,11 @@ intellijPlatform {
         """.trimIndent()
 
         changeNotes = """
+            <h3>4.2.1 — API 兼容性修复</h3>
+            <ul>
+                <li>移除被 Marketplace 兼容性检查标记的 API 用法 (internal / scheduled for removal / experimental): 省电模式改为 toolWindow::isVisible 闸门 + Swing AncestorListener 实现, 覆盖 2024.3 ~ 2025.3 全版本无告警</li>
+            </ul>
+
             <h3>4.2.0 — 关注球队升级与省电模式</h3>
             <ul>
                 <li><b>关注球队多队支持</b> — 逗号分隔添加多支关注球队 (如 皇马,巴萨), 旧单队配置自动迁移; 进球/开赛通知与状态栏比分按全部关注队匹配</li>

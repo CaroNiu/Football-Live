@@ -94,28 +94,12 @@ public class FifaToolWindowFactory implements ToolWindowFactory {
             schedulePanel.setTeamFilter(team);
         });
 
-        // 面板轮询跟随工具窗可见性: 隐藏暂停, 显示恢复 (含立即刷新)
-        // 2024.3 API: ToolWindowManagerListener 在 wm.ex 包, 事件走 stateChanged 三参重载
-        com.intellij.openapi.wm.ex.ToolWindowManagerEx.getInstanceEx(project)
-                .addToolWindowManagerListener(new com.intellij.openapi.wm.ex.ToolWindowManagerListener() {
-                    @Override
-                    public void stateChanged(@NotNull com.intellij.openapi.wm.ToolWindowManager manager,
-                                             @NotNull com.intellij.openapi.wm.ToolWindow window,
-                                             @NotNull com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType type) {
-                        if (!"FIFA".equals(window.getId())) return;
-                        boolean activate = type == com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.ActivateToolWindow;
-                        boolean hide = type == com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.HideToolWindow;
-                        if (!activate && !hide) return;
-                        if (schedulePanel == null) return; // 首次激活时内容尚未创建
-                        com.intellij.openapi.diagnostic.Logger.getInstance(FifaToolWindowFactory.class)
-                                .info("toolwindow " + type + " → pollers " + (activate ? "resumed" : "paused"));
-                        schedulePanel.setPollingActive(activate);
-                        livePanel.setPollingActive(activate);
-                        teamRankingPanel.setPollingActive(activate);
-                        fifaRankingPanel.setPollingActive(activate);
-                        newsPanel.setPollingActive(activate);
-                    }
-                });
+        // 省电: 工具窗隐藏时面板轮询空转 (isVisible 闸门, 规避 253 已列为 internal/待移除的监听 API)
+        schedulePanel.setVisibilityGate(toolWindow::isVisible);
+        livePanel.setVisibilityGate(toolWindow::isVisible);
+        teamRankingPanel.setVisibilityGate(toolWindow::isVisible);
+        fifaRankingPanel.setVisibilityGate(toolWindow::isVisible);
+        newsPanel.setVisibilityGate(toolWindow::isVisible);
 
         // 单按钮触发当前可见 Tab 刷新
         refreshButton.addActionListener(e -> {
