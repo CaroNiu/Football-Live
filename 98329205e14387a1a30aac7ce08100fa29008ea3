@@ -1,0 +1,35 @@
+src/main/java/com/fifa/plugin/ui/toolwindow/SchedulePanel.java
+  244e6f98a3da33fb 452-470
+src/main/java/com/fifa/plugin/ui/toolwindow/FifaToolWindowFactory.java
+  244e6f98a3da33fb 97-102
+src/main/java/com/fifa/plugin/ui/toolwindow/FifaRankingPanel.java
+  244e6f98a3da33fb 73,76-94
+build.gradle.kts
+  244e6f98a3da33fb 7,80-84
+src/main/java/com/fifa/plugin/ui/toolwindow/TeamRankingPanel.java
+  244e6f98a3da33fb 81,91-109
+src/main/java/com/fifa/plugin/ui/toolwindow/LivePanel.java
+  244e6f98a3da33fb 284-297,300-302
+src/main/java/com/fifa/plugin/ui/toolwindow/NewsPanel.java
+  244e6f98a3da33fb 54,57-75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "98329205e14387a1a30aac7ce08100fa29008ea3",
+  "prompts": {
+    "244e6f98a3da33fb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1b029a22-cbc3-4a51-9d0c-367c0a1dd8ce",
+        "model": "glm-5.3-flash"
+      },
+      "human_author": "CaroNiu",
+      "messages": [],
+      "total_additions": 1998,
+      "total_deletions": 2107,
+      "accepted_lines": 15637,
+      "overriden_lines": 10
+    }
+  }
+}
