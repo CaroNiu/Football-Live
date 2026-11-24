@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.fifa.plugin"
-version = "4.2.1"
+version = "4.3.0"
 
 repositories {
     mavenCentral()
@@ -77,6 +77,14 @@ intellijPlatform {
         """.trimIndent()
 
         changeNotes = """
+            <h3>4.3.0 — Bilingual UI (English / Chinese)</h3>
+            <ul>
+                <li><b>UI language now follows your IDE language</b> — English by default, Simplified Chinese on Chinese-language IDEs. Covers tool window, tabs, settings, status messages and notifications.</li>
+                <li>Enter key opens the selected match details in the Live tab</li>
+                <li>Bilingual README (English / 简体中文)</li>
+                <li>Match data (team names, news, commentary) remains from the Baidu Sports Chinese source</li>
+            </ul>
+
             <h3>4.2.1 — API 兼容性修复</h3>
             <ul>
                 <li>移除被 Marketplace 兼容性检查标记的 API 用法 (internal / scheduled for removal / experimental): 省电模式改为 toolWindow::isVisible 闸门 + Swing AncestorListener 实现, 覆盖 2024.3 ~ 2025.3 全版本无告警</li>

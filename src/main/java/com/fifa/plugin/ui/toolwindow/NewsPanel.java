@@ -1,5 +1,6 @@
 package com.fifa.plugin.ui.toolwindow;
 
+import com.fifa.plugin.i18n.FBundle;
 import com.fifa.plugin.api.FootballDataClient;
 import com.fifa.plugin.core.LeagueRegistry;
 import com.intellij.ide.BrowserUtil;
@@ -86,7 +87,7 @@ public class NewsPanel extends JPanel {
                 SwingUtilities.invokeLater(() -> {
                     listPanel.removeAll();
                     if (news.isEmpty()) {
-                        listPanel.add(centerLabel("暂无新闻数据"));
+                        listPanel.add(centerLabel(FBundle.message("news.none")));
                     } else {
                         for (FootballDataClient.NewsItem n : news) {
                             listPanel.add(buildCard(n));
@@ -95,13 +96,13 @@ public class NewsPanel extends JPanel {
                     }
                     listPanel.revalidate();
                     listPanel.repaint();
-                    setStatus("✓ 已加载 " + news.size() + " 条新闻 · " + new java.util.Date());
+                    setStatus("✓ " + FBundle.message("news.loaded", news.size()) + " " + new java.util.Date());
                 });
             } catch (Exception e) {
                 LOG.warn("News refresh error", e);
                 SwingUtilities.invokeLater(() -> {
                     listPanel.removeAll();
-                    listPanel.add(centerLabel("⚠ 拉取失败: " + e.getMessage()));
+                    listPanel.add(centerLabel(FBundle.message("st.load.fail") + e.getMessage()));
                     listPanel.revalidate();
                     listPanel.repaint();
                 });

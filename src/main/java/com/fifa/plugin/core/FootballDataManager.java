@@ -1,5 +1,6 @@
 package com.fifa.plugin.core;
 
+import com.fifa.plugin.i18n.FBundle;
 import com.fifa.plugin.api.BaiduMatchListClient;
 import com.fifa.plugin.cache.MatchCache;
 import com.fifa.plugin.model.Match;
@@ -106,10 +107,10 @@ public final class FootballDataManager {
             settings.setRatingPrompted(true);
             Notification n = NotificationGroupManager.getInstance()
                     .getNotificationGroup("FIFA.Notification")
-                    .createNotification("⚽ 用 Football Live 一周了",
-                            "如果它陪你看了几场好球, 去 Marketplace 给个评价吧 — 这对独立插件很重要",
+                    .createNotification(FBundle.message("notif.rate.title"),
+                            FBundle.message("notif.rate.body"),
                             NotificationType.INFORMATION);
-            n.addAction(new AnAction("打开 Marketplace") {
+            n.addAction(new AnAction(FBundle.message("notif.open.marketplace")) {
                 @Override
                 public void actionPerformed(@NotNull AnActionEvent e) {
                     try {
@@ -215,15 +216,15 @@ public final class FootballDataManager {
 
             // 开赛提醒 (保持设置项"比赛开始时发送通知提醒"的语义)
             if (!"IN_PLAY".equals(prevStatus) && "IN_PLAY".equals(status)) {
-                notifyMatch("🔴 开赛: " + home + " vs " + away,
+                notifyMatch(FBundle.message("notif.kickoff") + " " + home + " vs " + away,
                         league + (m.getRoundName() != null ? " · " + m.getRoundName() : ""));
             }
             // 进球提醒 (进行中且比分变化; 一次快照内连进两球显示为一次 旧→新)
             if ("IN_PLAY".equals(status) && !prevScore.equals(score)) {
                 String minute = m.getMinute() != null ? m.getMinute() + "' " : "";
-                notifyMatch("⚽ 进球! " + home + " " + score + " " + away,
+                notifyMatch(FBundle.message("notif.goal") + " " + home + " " + score + " " + away,
                         league + (m.getRoundName() != null ? " · " + m.getRoundName() : "")
-                                + " · " + minute + "(原比分 " + prevScore + ")");
+                                + " · " + minute + FBundle.message("notif.prev.score", prevScore));
             }
         }
 
@@ -248,7 +249,7 @@ public final class FootballDataManager {
             Notification n = NotificationGroupManager.getInstance()
                     .getNotificationGroup("FIFA.Notification")
                     .createNotification(title, content, NotificationType.INFORMATION);
-            n.addAction(new AnAction("打开直播") {
+            n.addAction(new AnAction(FBundle.message("notif.open.live")) {
                 @Override
                 public void actionPerformed(@NotNull AnActionEvent e) {
                     openLiveToolWindow();

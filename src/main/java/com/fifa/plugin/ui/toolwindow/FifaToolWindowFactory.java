@@ -1,5 +1,6 @@
 package com.fifa.plugin.ui.toolwindow;
 
+import com.fifa.plugin.i18n.FBundle;
 import com.fifa.plugin.core.LeagueRegistry;
 import com.fifa.plugin.ui.component.LeagueFilterBar;
 import com.intellij.icons.AllIcons;
@@ -57,11 +58,11 @@ public class FifaToolWindowFactory implements ToolWindowFactory {
         JPanel header = new JPanel(new BorderLayout());
         header.setBorder(BorderFactory.createEmptyBorder(6, 12, 2, 8));
 
-        JLabel title = new JLabel("⚽ 足球直播");
+        JLabel title = new JLabel(FBundle.message("win.title"));
         title.setFont(title.getFont().deriveFont(Font.BOLD, 14f));
         header.add(title, BorderLayout.WEST);
 
-        JButton refreshButton = new JButton("刷新", AllIcons.Actions.Refresh);
+        JButton refreshButton = new JButton(FBundle.message("btn.refresh"), AllIcons.Actions.Refresh);
         header.add(refreshButton, BorderLayout.EAST);
 
         LeagueFilterBar filterBar = new LeagueFilterBar();
@@ -80,11 +81,11 @@ public class FifaToolWindowFactory implements ToolWindowFactory {
         livePanel = new LivePanel();
 
         JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("赛程", schedulePanel);
-        tabs.addTab("直播", livePanel);
-        tabs.addTab("球队榜", teamRankingPanel);
-        tabs.addTab("FIFA排名", fifaRankingPanel);
-        tabs.addTab("新闻", newsPanel);
+        tabs.addTab(FBundle.message("tab.schedule"), schedulePanel);
+        tabs.addTab(FBundle.message("tab.live"), livePanel);
+        tabs.addTab(FBundle.message("tab.rankings"), teamRankingPanel);
+        tabs.addTab(FBundle.message("tab.fifa"), fifaRankingPanel);
+        tabs.addTab(FBundle.message("tab.news"), newsPanel);
         root.add(tabs, BorderLayout.CENTER);
         PROJECT_TABS.put(project, tabs);
 
@@ -121,7 +122,7 @@ public class FifaToolWindowFactory implements ToolWindowFactory {
 
         // Stripe 显示名: id 仍为 FIFA (升级兼容), 展示名改为全赛事定位
         try {
-            toolWindow.setStripeTitle("足球直播");
+            toolWindow.setStripeTitle(FBundle.message("win.stripe"));
         } catch (Exception ignored) {
         }
     }

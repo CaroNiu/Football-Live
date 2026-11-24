@@ -32,6 +32,8 @@ public class FifaSettingsState implements PersistentStateComponent<FifaSettingsS
         public String firstUseDate = "";
         /** 是否已弹过评分引导 (只弹一次) */
         public boolean ratingPrompted = false;
+        /** 界面语言: "" = 跟随 IDE 区域, "en" = English, "zh" = 中文 */
+        public String uiLanguage = "";
     }
 
     private State myState = new State();
@@ -126,5 +128,13 @@ public class FifaSettingsState implements PersistentStateComponent<FifaSettingsS
 
     public void setRatingPrompted(boolean prompted) {
         myState.ratingPrompted = prompted;
+    }
+
+    public String getUiLanguage() {
+        return myState.uiLanguage == null ? "" : myState.uiLanguage;
+    }
+
+    public void setUiLanguage(String lang) {
+        myState.uiLanguage = lang == null ? "" : lang;
     }
 }

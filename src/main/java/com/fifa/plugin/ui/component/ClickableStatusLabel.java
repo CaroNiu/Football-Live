@@ -1,5 +1,6 @@
 package com.fifa.plugin.ui.component;
 
+import com.fifa.plugin.i18n.FBundle;
 import com.intellij.ui.components.JBLabel;
 
 import javax.swing.*;
@@ -21,7 +22,7 @@ public class ClickableStatusLabel extends JBLabel {
         this.retryAction = retryAction;
         setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
         setCursor(new Cursor(Cursor.HAND_CURSOR));
-        setToolTipText("状态以 ⚠ 开头时点击重试");
+        setToolTipText(FBundle.message("click.retry.tooltip"));
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {

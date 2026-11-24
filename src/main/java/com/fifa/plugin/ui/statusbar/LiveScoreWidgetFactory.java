@@ -1,5 +1,6 @@
 package com.fifa.plugin.ui.statusbar;
 
+import com.fifa.plugin.i18n.FBundle;
 import com.fifa.plugin.core.FootballDataManager;
 import com.fifa.plugin.core.LeagueRegistry;
 import com.fifa.plugin.model.Match;
@@ -110,7 +111,7 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
         @Nullable
         @Override
         public String getTooltipText() {
-            return "足球直播比分 - 点击打开直播 Tab";
+            return FBundle.message("widget.tooltip");
         }
 
         @Nullable
@@ -163,7 +164,7 @@ public class LiveScoreWidgetFactory implements StatusBarWidgetFactory {
 
             List<Match> liveMatches = dm.getLiveMatches();
             if (liveMatches.isEmpty()) {
-                currentText = "⚽ 无进行中的比赛";
+                currentText = FBundle.message("st.no.live.matches");
                 return;
             }
             java.util.List<String> favoriteTeams = FifaSettingsState.getInstance().getFavoriteTeams();

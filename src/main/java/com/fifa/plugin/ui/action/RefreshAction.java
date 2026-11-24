@@ -1,5 +1,6 @@
 package com.fifa.plugin.ui.action;
 
+import com.fifa.plugin.i18n.FBundle;
 import com.fifa.plugin.core.FootballDataManager;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -26,8 +27,8 @@ public class RefreshAction extends AnAction {
         NotificationGroupManager.getInstance()
                 .getNotificationGroup("FIFA.Notification")
                 .createNotification(
-                        "足球直播",
-                        "数据已刷新 ✓",
+                        FBundle.message("act.title"),
+                        FBundle.message("notif.refreshed"),
                         NotificationType.INFORMATION
                 )
                 .notify(e.getProject());

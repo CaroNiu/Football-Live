@@ -1,5 +1,6 @@
 package com.fifa.plugin.ui.toolwindow;
 
+import com.fifa.plugin.i18n.FBundle;
 import com.fifa.plugin.api.BaiduMatchListClient;
 import com.fifa.plugin.api.BaiduSportsClient;
 import com.fifa.plugin.core.LeagueRegistry;
@@ -74,7 +75,7 @@ public class SchedulePanel extends JPanel {
 
         // ---- 顶部: 日期选择器 ----
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
-        toolbar.add(new JBLabel("日期:"));
+        toolbar.add(new JBLabel(FBundle.message("lbl.date")));
 
         dateSelector = new JComboBox<>();
         dateSelector.setRenderer(new DefaultListCellRenderer() {
@@ -85,8 +86,8 @@ public class SchedulePanel extends JPanel {
                 if (value instanceof BaiduSportsClient.DateLabel dl) {
                     LocalDate today = LocalDate.now();
                     String label = dl.date.format(DateTimeFormatter.ofPattern("MM-dd")) + " · " + dl.suffix;
-                    if (dl.date.equals(today)) label += " (今天)";
-                    else if (dl.date.equals(today.plusDays(1))) label += " (明天)";
+                    if (dl.date.equals(today)) label += FBundle.message("sch.today.suffix");
+                    else if (dl.date.equals(today.plusDays(1))) label += FBundle.message("sch.tomorrow.suffix");
                     int n = cachedCount(dl.date);
                     if (n > 0) label += " · " + n + "场";
                     setText(label);
@@ -103,12 +104,12 @@ public class SchedulePanel extends JPanel {
 
         // 前后日快捷切换: 按钮 + 键盘 ← / → (表格聚焦时方向键仍归表格单元格导航)
         JButton prevBtn = new JButton("←");
-        prevBtn.setToolTipText("前一天 (快捷键 ←)");
+        prevBtn.setToolTipText(FBundle.message("btn.prev.day.tooltip"));
         prevBtn.setMargin(new Insets(2, 8, 2, 8));
         prevBtn.addActionListener(e -> shiftDay(-1));
         toolbar.add(prevBtn);
         JButton nextBtn = new JButton("→");
-        nextBtn.setToolTipText("后一天 (快捷键 →)");
+        nextBtn.setToolTipText(FBundle.message("btn.next.day.tooltip"));
         nextBtn.setMargin(new Insets(2, 8, 2, 8));
         nextBtn.addActionListener(e -> shiftDay(1));
         toolbar.add(nextBtn);
@@ -126,7 +127,7 @@ public class SchedulePanel extends JPanel {
             public void actionPerformed(java.awt.event.ActionEvent e) { shiftDay(1); }
         });
 
-        JButton todayBtn = new JButton("今天");
+        JButton todayBtn = new JButton(FBundle.message("btn.today"));
         todayBtn.addActionListener(e -> {
             LocalDate today = LocalDate.now();
             for (int i = 0; i < dateSelector.getItemCount(); i++) {
@@ -138,13 +139,13 @@ public class SchedulePanel extends JPanel {
         });
         toolbar.add(todayBtn);
 
-        JButton refreshBtn = new JButton("刷新");
+        JButton refreshBtn = new JButton(FBundle.message("btn.refresh"));
         refreshBtn.addActionListener(e -> refresh());
         toolbar.add(refreshBtn);
 
         // 球队过滤 chip (球队榜点击跳转进入时出现, 点击清除)
         clearTeamBtn.setVisible(false);
-        clearTeamBtn.setToolTipText("清除球队过滤");
+        clearTeamBtn.setToolTipText(FBundle.message("btn.clear.team.tooltip"));
         clearTeamBtn.setMargin(new Insets(2, 8, 2, 8));
         clearTeamBtn.addActionListener(e -> setTeamFilter(""));
         toolbar.add(clearTeamBtn);
@@ -152,7 +153,7 @@ public class SchedulePanel extends JPanel {
         add(toolbar, BorderLayout.NORTH);
 
         // ---- 表格 ----
-        String[] columns = {"时间", "赛事", "轮次", "主队", "比分", "客队", "状态"};
+        String[] columns = {FBundle.message("col.time"), FBundle.message("col.league"), FBundle.message("col.round"), FBundle.message("col.home"), FBundle.message("col.score"), FBundle.message("col.away"), FBundle.message("col.status")};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -214,7 +215,7 @@ public class SchedulePanel extends JPanel {
     /** 球队榜跳转: 按球队过滤赛程 (空串清除); 与赛事过滤叠加, 换日期/赛事后仍生效 */
     public void setTeamFilter(String team) {
         teamFilter = team == null ? "" : team;
-        clearTeamBtn.setText(teamFilter.isEmpty() ? "" : "✕ 球队: " + teamFilter);
+        clearTeamBtn.setText(teamFilter.isEmpty() ? "" : FBundle.message("sch.team.chip", teamFilter));
         clearTeamBtn.setVisible(!teamFilter.isEmpty());
         if (currentDate != null) showForDate(currentDate);
     }
@@ -223,8 +224,8 @@ public class SchedulePanel extends JPanel {
     private void shiftDay(int delta) {
         int idx = dateSelector.getSelectedIndex() + delta;
         if (idx < 0 || idx >= dateSelector.getItemCount()) {
-            setStatus(delta < 0 ? "⚠ 已是窗口最早日期 (今天-" + WINDOW_DAYS + " 天)"
-                    : "⚠ 已是窗口最晚日期 (今天+" + WINDOW_DAYS + " 天)");
+            setStatus(delta < 0 ? FBundle.message("sch.window.start", WINDOW_DAYS)
+                    : FBundle.message("sch.window.end", WINDOW_DAYS));
             return;
         }
         dateSelector.setSelectedIndex(idx);
@@ -240,7 +241,7 @@ public class SchedulePanel extends JPanel {
             BaiduMatchListClient client = ApplicationManager.getApplication()
                     .getService(BaiduMatchListClient.class);
             if (client == null) {
-                setStatus("⚠ 服务未注册");
+                setStatus(FBundle.message("st.service.missing"));
                 return;
             }
             try {
@@ -280,16 +281,16 @@ public class SchedulePanel extends JPanel {
                 SwingUtilities.invokeLater(() -> {
                     rebuildDateSelector();
                     if (bundle.matches.isEmpty()) {
-                        setStatus("⚠ 暂无数据");
+                        setStatus(FBundle.message("st.no.data"));
                     } else {
-                        setStatus("✓ 已加载 " + bundle.matches.size() + " 场 (近 3 天聚合 · 其余日期点选自动加载) · "
-                                + new java.util.Date());
+                        setStatus("✓ " + FBundle.message("sch.aggregate.loaded", bundle.matches.size())
+                                + " " + new java.util.Date());
                     }
                 });
             } catch (Exception e) {
                 LOG.warn("loadAndShow failed", e);
                 SwingUtilities.invokeLater(() ->
-                        setStatus("⚠ 拉取失败: " + e.getClass().getSimpleName() + ": " + e.getMessage()));
+                        setStatus(FBundle.message("st.load.fail") + e.getClass().getSimpleName() + ": " + e.getMessage()));
             }
         });
     }
@@ -341,7 +342,7 @@ public class SchedulePanel extends JPanel {
             inFlight.add(date);
         }
         boolean allLeagues = "ALL".equals(context);
-        setStatus("⏳ 正在拉取 " + date + " 赛程 (" + (allLeagues ? "主要赛事 ×" + TOP_LEAGUES.length : context) + ")…");
+        setStatus(FBundle.message("sch.loading", date, allLeagues ? String.valueOf(TOP_LEAGUES.length) : context));
 
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             List<Match> merged = new ArrayList<>();
@@ -394,11 +395,11 @@ public class SchedulePanel extends JPanel {
             }
             SwingUtilities.invokeLater(() -> {
                 if (failure != null) {
-                    setStatus("⚠ " + date + " 拉取失败: " + failure);
+                    setStatus(FBundle.message("sch.fetch.fail", date, failure));
                     return;
                 }
                 if (date.equals(currentDate)) showForDate(date);
-                else setStatus("✓ " + date + " 赛程已加载");
+                else setStatus(FBundle.message("sch.loaded.far", date));
             });
         });
     }
@@ -423,9 +424,9 @@ public class SchedulePanel extends JPanel {
             filtered.add(m);
         }
         if (filtered.isEmpty()) {
-            String scope = (selected == null || selected.isEmpty()) ? "" : " · 所选赛事";
-            String teamScope = teamFilter.isEmpty() ? "" : " · 球队 " + teamFilter;
-            setStatus("⚠ " + date + scope + teamScope + "当日无比赛" + (fromCache ? "" : " (或数据未覆盖)"));
+            String msgKey = (selected == null || selected.isEmpty()) ? "sch.no.matches"
+                    : (teamFilter.isEmpty() ? "sch.no.matches.league" : "sch.no.matches.team");
+            setStatus(FBundle.message(msgKey, date, teamFilter) + (fromCache ? "" : " (?)"));
             return;
         }
         filtered.sort((x, y) -> {
@@ -444,9 +445,9 @@ public class SchedulePanel extends JPanel {
                     formatStatus(m.getStatus())
             });
         }
-        setStatus("✓ " + date + " · " + filtered.size() + " 场比赛"
+        setStatus("✓ " + date + FBundle.message("sch.count.suffix", filtered.size())
                 + (selected == null || selected.isEmpty() ? "" : " · " + selected)
-                + (teamFilter.isEmpty() ? "" : " · 球队 " + teamFilter));
+                + (teamFilter.isEmpty() ? "" : " · " + teamFilter));
     }
 
     /** 工具窗可见性闸门 (工厂注入 toolWindow::isVisible): 隐藏时轮询空转省资源 */
@@ -492,11 +493,11 @@ public class SchedulePanel extends JPanel {
     private String formatStatus(String status) {
         if (status == null) return "";
         return switch (status) {
-            case "SCHEDULED" -> "⏳ 未开赛";
-            case "TIMED" -> "🕐 已定时";
-            case "IN_PLAY" -> "🔴 进行中";
-            case "PAUSED" -> "⏸ 暂停";
-            case "FINISHED" -> "✅ 已结束";
+            case "SCHEDULED" -> FBundle.message("st.not.started");
+            case "TIMED" -> FBundle.message("st.scheduled");
+            case "IN_PLAY" -> FBundle.message("st.live");
+            case "PAUSED" -> FBundle.message("st.paused");
+            case "FINISHED" -> FBundle.message("st.finished");
             default -> status;
         };
     }

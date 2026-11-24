@@ -1,5 +1,6 @@
 package com.fifa.plugin.ui.toolwindow;
 
+import com.fifa.plugin.i18n.FBundle;
 import com.fifa.plugin.api.BaiduLiveMatchClient;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLabel;
@@ -32,7 +33,7 @@ public class LiveMatchDialog extends DialogWrapper {
         super(true);  // modal
         this.match = match;
         this.textLive = textLive;
-        setTitle("比赛详情 · " + (match != null && match.matchName != null ? match.matchName : "直播"));
+        setTitle(FBundle.message("dlg.title.prefix") + (match != null && match.matchName != null ? match.matchName : "直播"));
         setSize(720, 640);
         init();
     }
@@ -46,8 +47,8 @@ public class LiveMatchDialog extends DialogWrapper {
 
         // ---- 主体: Tab ----
         JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("分析", buildAnalysisPanel());
-        tabs.addTab("文字直播", buildTextLivePanel());
+        tabs.addTab(FBundle.message("dlg.tab.analysis"), buildAnalysisPanel());
+        tabs.addTab(FBundle.message("dlg.tab.textlive"), buildTextLivePanel());
         root.add(tabs, BorderLayout.CENTER);
 
         return root;
@@ -60,7 +61,7 @@ public class LiveMatchDialog extends DialogWrapper {
         // 不再设硬编码背景, 跟随 DialogWrapper 主题, 避免暗色主题下白字浅底不可读
 
         // 阶段 + 状态
-        JLabel stage = new JBLabel("【" + (match.matchStage != null ? match.matchStage : "未知阶段") + "】  "
+        JLabel stage = new JBLabel("【" + (match.matchStage != null ? match.matchStage : FBundle.message("dlg.stage.unknown")) + "】  "
                 + (match.matchStatusText != null ? match.matchStatusText : ""));
         stage.setFont(stage.getFont().deriveFont(Font.BOLD, 14f));
         stage.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -73,12 +74,12 @@ public class LiveMatchDialog extends DialogWrapper {
         matchup.setLayout(new BoxLayout(matchup, BoxLayout.X_AXIS));
         matchup.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel leftTeam = new JBLabel(match.leftName != null ? match.leftName : "主队");
+        JLabel leftTeam = new JBLabel(match.leftName != null ? match.leftName : FBundle.message("dlg.col.home"));
         leftTeam.setFont(leftTeam.getFont().deriveFont(Font.PLAIN, 15f));
         JLabel scoreSep = new JBLabel("  ");
         JLabel score = new JBLabel(match.leftGoal + " - " + match.rightGoal);
         score.setFont(score.getFont().deriveFont(Font.PLAIN, 15f));
-        JLabel rightTeam = new JBLabel("  " + (match.rightName != null ? match.rightName : "客队"));
+        JLabel rightTeam = new JBLabel("  " + (match.rightName != null ? match.rightName : FBundle.message("dlg.col.away")));
         rightTeam.setFont(rightTeam.getFont().deriveFont(Font.PLAIN, 15f));
 
         matchup.add(leftTeam);
@@ -116,7 +117,7 @@ public class LiveMatchDialog extends DialogWrapper {
         root.setBorder(new EmptyBorder(8, 12, 8, 12));
 
         if (match == null) {
-            root.add(centerLabel("⚠ 拉取失败"));
+            root.add(centerLabel(FBundle.message("dlg.load.fail")));
             root.add(Box.createVerticalGlue());
         } else {
             // 网友预测
@@ -138,7 +139,7 @@ public class LiveMatchDialog extends DialogWrapper {
             }
             // 若全空, 给占位
             if (userPred == null && intel == null && hist == null) {
-                root.add(centerLabel("⚠ 该比赛尚无可用分析数据 (可能为未来比赛, 百度未填充)"));
+                root.add(centerLabel(FBundle.message("dlg.no.analysis")));
             }
             root.add(Box.createVerticalGlue());
         }
@@ -157,15 +158,15 @@ public class LiveMatchDialog extends DialogWrapper {
         boolean hasPred = !match.predictions.isEmpty();
         if (!hasPct && !hasPred) return null;
 
-        JPanel sec = newSection("📊 网友预测");
+        JPanel sec = newSection(FBundle.message("dlg.pred.poll"));
 
         if (hasPct) {
             JPanel pct = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
             pct.setOpaque(false);
             pct.setAlignmentX(Component.LEFT_ALIGNMENT);
-            pct.add(makePctLabel("主胜", match.victoryPct, new Color(0xE6, 0x49, 0x49)));
-            pct.add(makePctLabel("平", match.drawPct, new Color(0xE0, 0xA8, 0x1E)));
-            pct.add(makePctLabel("客胜", match.lostPct, new Color(0x52, 0x8B, 0xFF)));
+            pct.add(makePctLabel(FBundle.message("dlg.home.win"), match.victoryPct, new Color(0xE6, 0x49, 0x49)));
+            pct.add(makePctLabel(FBundle.message("dlg.draw"), match.drawPct, new Color(0xE0, 0xA8, 0x1E)));
+            pct.add(makePctLabel(FBundle.message("dlg.away.win"), match.lostPct, new Color(0x52, 0x8B, 0xFF)));
             sec.add(pct);
             sec.add(Box.createVerticalStrut(6));
         }
@@ -199,10 +200,10 @@ public class LiveMatchDialog extends DialogWrapper {
                         || (i.awayTeamName != null && !i.awayTeamName.isEmpty()));
         if (!hasAny) return null;
 
-        JPanel sec = newSection("🧠 智能预测");
+        JPanel sec = newSection(FBundle.message("dlg.pred.ai"));
         for (BaiduLiveMatchClient.Intelligence ig : match.intelligences) {
             // 板块子标题
-            JLabel sub = new JBLabel((ig.title != null && !ig.title.isEmpty() ? ig.title : "情报"));
+            JLabel sub = new JBLabel((ig.title != null && !ig.title.isEmpty() ? ig.title : FBundle.message("dlg.intel")));
             sub.setFont(sub.getFont().deriveFont(Font.BOLD, 12f));
             sub.setForeground(new Color(0x33, 0x66, 0xCC));
             sub.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -235,7 +236,7 @@ public class LiveMatchDialog extends DialogWrapper {
         p.add(name);
 
         if (contents == null || contents.isEmpty()) {
-            JLabel none = new JBLabel("  — 暂无数据");
+            JLabel none = new JBLabel(FBundle.message("dlg.none.data"));
             none.setForeground(UIManager.getColor("Label.disabledForeground"));
             none.setFont(none.getFont().deriveFont(11f));
             none.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -260,11 +261,11 @@ public class LiveMatchDialog extends DialogWrapper {
                         || (r.result != null && !r.result.isEmpty()));
         if (!hasAny) return null;
 
-        JPanel sec = newSection("📜 历史交锋 / 主客队战绩");
+        JPanel sec = newSection(FBundle.message("dlg.pred.h2h"));
         for (BaiduLiveMatchClient.Record rec : match.records) {
             // 子标题
             String headTitle = (rec.title != null && !rec.title.isEmpty()) ? rec.title
-                    : (rec.teamName != null && !rec.teamName.isEmpty()) ? rec.teamName + " 战绩" : "战绩";
+                    : (rec.teamName != null && !rec.teamName.isEmpty()) ? rec.teamName + " " + FBundle.message("misc.record.suffix") : " " + FBundle.message("misc.record.suffix");
             JLabel sub = new JBLabel(headTitle);
             sub.setFont(sub.getFont().deriveFont(Font.BOLD, 12f));
             sub.setForeground(new Color(0x33, 0x66, 0xCC));
@@ -300,7 +301,7 @@ public class LiveMatchDialog extends DialogWrapper {
                     sec.add(l);
                 }
             } else {
-                JLabel none = new JBLabel("  — 暂无近期比赛数据");
+                JLabel none = new JBLabel(FBundle.message("dlg.none.recent"));
                 none.setForeground(UIManager.getColor("Label.disabledForeground"));
                 none.setFont(none.getFont().deriveFont(11f));
                 none.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -321,7 +322,7 @@ public class LiveMatchDialog extends DialogWrapper {
         list.setBorder(new EmptyBorder(8, 12, 8, 12));
 
         if (textLive == null || textLive.isEmpty()) {
-            JLabel empty = new JBLabel("⚠ 暂无文字直播数据 (比赛未开始 / 已结束 / 接口未返回)");
+            JLabel empty = new JBLabel(FBundle.message("dlg.no.textlive"));
             empty.setHorizontalAlignment(SwingConstants.CENTER);
             empty.setBorder(new EmptyBorder(40, 0, 40, 0));
             empty.setForeground(UIManager.getColor("Label.disabledForeground"));
@@ -360,7 +361,7 @@ public class LiveMatchDialog extends DialogWrapper {
         card.add(time);
         card.add(Box.createHorizontalStrut(10));
 
-        JLabel type = new JBLabel(" " + (e.iconType != null && !e.iconType.isEmpty() ? e.iconType : "事件") + " ");
+        JLabel type = new JBLabel(" " + (e.iconType != null && !e.iconType.isEmpty() ? e.iconType : FBundle.message("dlg.events")) + " ");
         type.setOpaque(true);
         type.setBackground(accentFor(e.iconType));
         type.setForeground(Color.WHITE);
@@ -383,11 +384,11 @@ public class LiveMatchDialog extends DialogWrapper {
 
     private Color accentFor(String iconType) {
         if (iconType == null) return new Color(0x60, 0x66, 0x6F);
-        if (iconType.contains("进球")) return new Color(0xE6, 0x49, 0x49);
-        if (iconType.contains("红牌")) return new Color(0xC0, 0x1B, 0x1B);
-        if (iconType.contains("黄牌")) return new Color(0xE0, 0xA8, 0x1E);
-        if (iconType.contains("换人")) return new Color(0x52, 0x8B, 0xFF);
-        if (iconType.contains("点球")) return new Color(0x8E, 0x44, 0xAD);
+        if (iconType.contains(FBundle.message("dlg.goal"))) return new Color(0xE6, 0x49, 0x49);
+        if (iconType.contains(FBundle.message("dlg.red"))) return new Color(0xC0, 0x1B, 0x1B);
+        if (iconType.contains(FBundle.message("dlg.yellow"))) return new Color(0xE0, 0xA8, 0x1E);
+        if (iconType.contains(FBundle.message("dlg.sub"))) return new Color(0x52, 0x8B, 0xFF);
+        if (iconType.contains(FBundle.message("dlg.pen"))) return new Color(0x8E, 0x44, 0xAD);
         if (iconType.contains("VAR")) return new Color(0x33, 0x33, 0x33);
         return new Color(0x60, 0x66, 0x6F);
     }

@@ -1,5 +1,6 @@
 package com.fifa.plugin.ui.toolwindow;
 
+import com.fifa.plugin.i18n.FBundle;
 import com.fifa.plugin.api.BaiduLiveMatchClient;
 import com.fifa.plugin.api.BaiduMatchListClient;
 import com.fifa.plugin.api.BaiduSportsClient;
@@ -54,18 +55,18 @@ public class LivePanel extends JPanel {
 
         // ---- 顶部 ----
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
-        JLabel title = new JLabel("⚽ 直播中 / 即将开赛 / 已结束");
+        JLabel title = new JLabel(FBundle.message("live.tab.all"));
         title.setFont(title.getFont().deriveFont(Font.BOLD, 13f));
         top.add(title);
         top.add(Box.createHorizontalStrut(12));
-        JLabel hint = new JLabel("<html><small>点击行查看详情 · 60 秒刷新</small></html>");
+        JLabel hint = new JLabel(FBundle.message("live.hint"));
         hint.setForeground(UIManager.getColor("Label.disabledForeground"));
         top.add(hint);
         add(top, BorderLayout.NORTH);
 
         // ---- 比赛列表 ----
         // 7 列显示 + 1 隐藏列存 baiduMatchId
-        String[] columns = {"时间", "赛事", "主队", "比分", "客队", "状态", "轮次", "baiduMatchId"};
+        String[] columns = {FBundle.message("col.time"), FBundle.message("col.league"), FBundle.message("col.home"), FBundle.message("col.score"), FBundle.message("col.away"), FBundle.message("col.status"), FBundle.message("col.round"), "baiduMatchId"};
         matchListModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -186,9 +187,9 @@ public class LivePanel extends JPanel {
                         });
                     }
                     if (liveOrUpcoming.isEmpty()) {
-                        setStatus("⚠ 当前无直播 / 即将开赛 / 已结束的比赛");
+                        setStatus(FBundle.message("live.none"));
                     } else {
-                        setStatus("✓ " + liveOrUpcoming.size() + " 场可关注 · " + new java.util.Date());
+                        setStatus("✓ " + liveOrUpcoming.size() + " " + FBundle.message("live.watchable.suffix") + " " + new java.util.Date());
                     }
                 });
             } catch (Exception e) {
@@ -228,7 +229,7 @@ public class LivePanel extends JPanel {
         }
 
         // 异步拉
-        setStatus("⚡ 拉取比赛详情: " + matchId.substring(0, Math.min(20, matchId.length())) + "...");
+        setStatus(FBundle.message("live.detail.loading") + matchId.substring(0, Math.min(20, matchId.length())) + "...");
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             try {
                 BaiduLiveMatchClient client = ApplicationManager.getApplication()
@@ -251,13 +252,13 @@ public class LivePanel extends JPanel {
 
                 SwingUtilities.invokeLater(() -> {
                     new LiveMatchDialog(finalM, finalLive).show();
-                    setStatus("✓ 详情已加载 · " + new java.util.Date());
+                    setStatus(FBundle.message("live.detail.loaded") + new java.util.Date());
                 });
             } catch (Exception e) {
                 LOG.warn("openDetailDialog failed", e);
                 SwingUtilities.invokeLater(() -> {
                     new LiveMatchDialog(placeholder, Collections.emptyList()).show();
-                    setStatus("⚠ 详情拉取失败, 已显示本地元数据");
+                    setStatus(FBundle.message("live.detail.fail"));
                 });
             }
         });
@@ -276,9 +277,9 @@ public class LivePanel extends JPanel {
     private String formatStatus(String s) {
         if (s == null) return "";
         return switch (s) {
-            case "IN_PLAY" -> "🔴 直播中";
-            case "FINISHED" -> "✅ 已结束";
-            case "SCHEDULED" -> "⏳ 未开赛";
+            case "IN_PLAY" -> FBundle.message("live.tab.live");
+            case "FINISHED" -> FBundle.message("st.finished");
+            case "SCHEDULED" -> FBundle.message("st.not.started");
             default -> s;
         };
     }

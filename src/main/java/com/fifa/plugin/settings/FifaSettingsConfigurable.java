@@ -1,5 +1,6 @@
 package com.fifa.plugin.settings;
 
+import com.fifa.plugin.i18n.FBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextArea;
@@ -26,6 +27,7 @@ public class FifaSettingsConfigurable implements Configurable {
     private JCheckBox enableNotificationCheck;
     private JBTextArea favoriteTeamsField;
     private JBTextArea followedLeaguesField;
+    private JComboBox<String> languageCombo;
 
     @Nls
     @Override
@@ -40,12 +42,41 @@ public class FifaSettingsConfigurable implements Configurable {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(JBUI.Borders.empty(10));
 
+        // 界面语言 (手动覆盖 IDE 区域; 改后重启生效)
+        JPanel langPanel = new JPanel();
+        langPanel.setLayout(new BoxLayout(langPanel, BoxLayout.X_AXIS));
+        langPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        langPanel.add(new JBLabel(FBundle.message("set.lang")));
+        languageCombo = new JComboBox<>(new String[]{"", "en", "zh"});
+        languageCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                String code = (String) value;
+                setText(code == null || code.isEmpty() ? FBundle.message("set.lang.auto")
+                        : "en".equals(code) ? FBundle.message("set.lang.en")
+                        : FBundle.message("set.lang.zh"));
+                return this;
+            }
+        });
+        languageCombo.setPreferredSize(new Dimension(220, 28));
+        langPanel.add(Box.createHorizontalStrut(8));
+        langPanel.add(languageCombo);
+        panel.add(langPanel);
+        JLabel langHint = new JBLabel(FBundle.message("set.lang.hint"));
+        langHint.setFont(langHint.getFont().deriveFont(10f));
+        langHint.setForeground(UIManager.getColor("Label.disabledForeground"));
+        langHint.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(langHint);
+        panel.add(Box.createVerticalStrut(15));
+
         // 数据源信息 (只读)
         JPanel dataSourcePanel = new JPanel();
         dataSourcePanel.setLayout(new BoxLayout(dataSourcePanel, BoxLayout.Y_AXIS));
-        dataSourcePanel.setBorder(BorderFactory.createTitledBorder("数据源"));
-        JLabel source1 = new JBLabel("  百度体育 (tiyu.baidu.com) · 全部足球赛事赛程 / 比分 / 积分榜 / 新闻");
-        JLabel source2 = new JBLabel("  公共数据源, 客户端缓存 1-5 分钟, 无需任何配置");
+        dataSourcePanel.setBorder(BorderFactory.createTitledBorder(FBundle.message("set.ds.title")));
+        JLabel source1 = new JBLabel(FBundle.message("set.ds.line1"));
+        JLabel source2 = new JBLabel(FBundle.message("set.ds.line2"));
         source1.setFont(source1.getFont().deriveFont(12f));
         source2.setFont(source2.getFont().deriveFont(11f));
         source2.setForeground(UIManager.getColor("Label.disabledForeground"));
@@ -57,13 +88,13 @@ public class FifaSettingsConfigurable implements Configurable {
         panel.add(Box.createVerticalStrut(15));
 
         // StatusBar 开关
-        showLiveScoreCheck = new JCheckBox("在状态栏显示实时比分");
+        showLiveScoreCheck = new JCheckBox(FBundle.message("set.statusbar"));
         showLiveScoreCheck.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(showLiveScoreCheck);
         panel.add(Box.createVerticalStrut(10));
 
         // 通知开关
-        enableNotificationCheck = new JCheckBox("进球 / 开赛通知 (关注赛事与关注球队)");
+        enableNotificationCheck = new JCheckBox(FBundle.message("set.notify"));
         enableNotificationCheck.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(enableNotificationCheck);
         panel.add(Box.createVerticalStrut(10));
@@ -71,11 +102,11 @@ public class FifaSettingsConfigurable implements Configurable {
         // 关注赛事 (逗号分隔, 与工具窗口选择条同步)
         JPanel leaguesPanel = new JPanel(new BorderLayout());
         leaguesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        leaguesPanel.add(new JBLabel("关注赛事 (逗号分隔, 如: 英超,西甲,欧冠): "), BorderLayout.NORTH);
+        leaguesPanel.add(new JBLabel(FBundle.message("set.leagues")), BorderLayout.NORTH);
         followedLeaguesField = new JBTextArea(3, 30);
         followedLeaguesField.setLineWrap(true);
         leaguesPanel.add(followedLeaguesField, BorderLayout.CENTER);
-        JLabel leaguesHint = new JBLabel("  工具窗口顶部的赛事选择条可随时快捷切换");
+        JLabel leaguesHint = new JBLabel(FBundle.message("set.leagues.hint"));
         leaguesHint.setFont(leaguesHint.getFont().deriveFont(10f));
         leaguesHint.setForeground(UIManager.getColor("Label.disabledForeground"));
         leaguesPanel.add(leaguesHint, BorderLayout.SOUTH);
@@ -85,11 +116,11 @@ public class FifaSettingsConfigurable implements Configurable {
         // 关注球队 (逗号分隔)
         JPanel favPanel = new JPanel(new BorderLayout());
         favPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        favPanel.add(new JBLabel("关注球队 (逗号分隔, 如: 皇马,巴萨): "), BorderLayout.NORTH);
+        favPanel.add(new JBLabel(FBundle.message("set.teams")), BorderLayout.NORTH);
         favoriteTeamsField = new JBTextArea(3, 30);
         favoriteTeamsField.setLineWrap(true);
         favPanel.add(favoriteTeamsField, BorderLayout.CENTER);
-        JLabel favHint = new JBLabel("  进球/开赛通知与状态栏比分优先展示这些球队");
+        JLabel favHint = new JBLabel(FBundle.message("set.teams.hint"));
         favHint.setFont(favHint.getFont().deriveFont(10f));
         favHint.setForeground(UIManager.getColor("Label.disabledForeground"));
         favPanel.add(favHint, BorderLayout.SOUTH);
@@ -103,6 +134,7 @@ public class FifaSettingsConfigurable implements Configurable {
         FifaSettingsState.State state = FifaSettingsState.getInstance().getState();
         return showLiveScoreCheck.isSelected() != state.showLiveScoreInStatusBar
                 || enableNotificationCheck.isSelected() != state.enableMatchNotification
+                || !String.valueOf(languageCombo.getSelectedItem()).equals(state.uiLanguage)
                 || !joined(splitCsv(favoriteTeamsField.getText())).equals(joined(state.favoriteTeams))
                 || !joinedFollowed().equals(joined(state.followedLeagues));
     }
@@ -112,6 +144,7 @@ public class FifaSettingsConfigurable implements Configurable {
         FifaSettingsState settings = FifaSettingsState.getInstance();
         settings.setShowLiveScoreInStatusBar(showLiveScoreCheck.isSelected());
         settings.setEnableMatchNotification(enableNotificationCheck.isSelected());
+        settings.setUiLanguage((String) languageCombo.getSelectedItem());
         settings.setFavoriteTeams(splitCsv(favoriteTeamsField.getText()));
         settings.setFollowedLeagues(splitCsv(followedLeaguesField.getText()));
     }
@@ -121,6 +154,7 @@ public class FifaSettingsConfigurable implements Configurable {
         FifaSettingsState.State state = FifaSettingsState.getInstance().getState();
         showLiveScoreCheck.setSelected(state.showLiveScoreInStatusBar);
         enableNotificationCheck.setSelected(state.enableMatchNotification);
+        languageCombo.setSelectedItem(FifaSettingsState.getInstance().getUiLanguage());
         favoriteTeamsField.setText(joined(FifaSettingsState.getInstance().getFavoriteTeams()));
         followedLeaguesField.setText(joined(state.followedLeagues));
     }

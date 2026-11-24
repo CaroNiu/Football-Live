@@ -1,5 +1,6 @@
 package com.fifa.plugin.ui.toolwindow;
 
+import com.fifa.plugin.i18n.FBundle;
 import com.fifa.plugin.api.BaiduRankingsClient;
 import com.fifa.plugin.core.LeagueRegistry;
 import com.fifa.plugin.model.BaiduRankedTeam;
@@ -43,7 +44,7 @@ public class TeamRankingPanel extends JPanel {
     public TeamRankingPanel() {
         setLayout(new BorderLayout());
 
-        String[] columns = {"#", "球队", "场", "胜", "平", "负", "进球", "失球", "净胜", "积分"};
+        String[] columns = {"#", FBundle.message("col.team"), FBundle.message("col.played"), FBundle.message("col.won"), FBundle.message("col.drawn"), FBundle.message("col.lost"), FBundle.message("col.gf"), FBundle.message("col.ga"), FBundle.message("col.gd"), FBundle.message("col.pts")};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -120,7 +121,7 @@ public class TeamRankingPanel extends JPanel {
                 SwingUtilities.invokeLater(() -> {
                     tableModel.setRowCount(0);
                     if (rankings.isEmpty()) {
-                        setStatus("⚠ 暂无 " + league + " 球队数据");
+                        setStatus(FBundle.message("rank.none", league));;
                         return;
                     }
                     int rank = 1;
@@ -135,12 +136,12 @@ public class TeamRankingPanel extends JPanel {
                                 t.points
                         });
                     }
-                    setStatus("✓ " + league + " · 已加载 " + rankings.size() + " 支球队 · " + new java.util.Date());
+                    setStatus("✓ " + FBundle.message("rank.loaded", league, rankings.size()) + " " + new java.util.Date());
                 });
             } catch (Exception e) {
                 LOG.warn("Team ranking refresh error", e);
                 SwingUtilities.invokeLater(() ->
-                        setStatus("⚠ 拉取失败: " + e.getClass().getSimpleName() + ": " + e.getMessage()));
+                        setStatus(FBundle.message("st.load.fail") + e.getClass().getSimpleName() + ": " + e.getMessage()));
             }
         });
     }

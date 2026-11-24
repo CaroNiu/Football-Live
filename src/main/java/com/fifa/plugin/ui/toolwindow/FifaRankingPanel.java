@@ -1,5 +1,6 @@
 package com.fifa.plugin.ui.toolwindow;
 
+import com.fifa.plugin.i18n.FBundle;
 import com.fifa.plugin.api.BaiduFifaRankingsClient;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,16 +43,16 @@ public class FifaRankingPanel extends JPanel {
         setLayout(new BorderLayout());
 
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
-        JLabel title = new JLabel("FIFA 官方排名 · 全部国家队");
+        JLabel title = new JLabel(FBundle.message("fifa.subtitle"));
         title.setFont(title.getFont().deriveFont(Font.BOLD, 13f));
         top.add(title);
         top.add(Box.createHorizontalStrut(12));
-        JLabel hint = new JLabel("<html><small>30 分钟刷新</small></html>");
+        JLabel hint = new JLabel(FBundle.message("fifa.hint"));
         hint.setForeground(UIManager.getColor("Label.disabledForeground"));
         top.add(hint);
         add(top, BorderLayout.NORTH);
 
-        String[] columns = {"#", "球队", "积分", "升降"};
+        String[] columns = {"#", FBundle.message("col.team"), FBundle.message("col.pts"), FBundle.message("col.rank.change")};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -96,7 +97,7 @@ public class FifaRankingPanel extends JPanel {
         BaiduFifaRankingsClient client = ApplicationManager.getApplication()
                 .getService(BaiduFifaRankingsClient.class);
         if (client == null) {
-            setStatus("⚠ 服务未注册");
+            setStatus(FBundle.message("st.service.missing"));
             return;
         }
         try {
@@ -104,7 +105,7 @@ public class FifaRankingPanel extends JPanel {
             SwingUtilities.invokeLater(() -> {
                 tableModel.setRowCount(0);
                 if (rankings.isEmpty()) {
-                    setStatus("⚠ 暂无 FIFA 排名数据");
+                    setStatus(FBundle.message("fifa.none"));
                     return;
                 }
                 for (BaiduFifaRankingsClient.FifaRankEntry r : rankings) {
@@ -115,12 +116,12 @@ public class FifaRankingPanel extends JPanel {
                             formatChange(r.change)
                     });
                 }
-                setStatus("✓ 已加载 " + rankings.size() + " 队 FIFA 排名 · " + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                setStatus("✓ " + FBundle.message("fifa.loaded", rankings.size()) + " " + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             });
         } catch (Exception e) {
             LOG.warn("FIFA ranking refresh error", e);
             SwingUtilities.invokeLater(() ->
-                    setStatus("⚠ 拉取失败: " + e.getClass().getSimpleName() + ": " + e.getMessage()));
+                    setStatus(FBundle.message("st.load.fail") + e.getClass().getSimpleName() + ": " + e.getMessage()));
         }
     }
 

@@ -1,5 +1,6 @@
 package com.fifa.plugin.ui.component;
 
+import com.fifa.plugin.i18n.FBundle;
 import com.fifa.plugin.core.LeagueRegistry;
 import com.fifa.plugin.model.League;
 import com.intellij.ui.ComboboxSpeedSearch;
@@ -17,7 +18,7 @@ import java.awt.*;
 public class LeagueFilterBar extends JPanel {
 
     /** 首项: 不过滤 */
-    public static final String ALL = "全部赛事";
+    public static final String ALL = FBundle.message("filter.all");
 
     private final JComboBox<String> combo;
     private boolean syncing = false;
@@ -25,7 +26,7 @@ public class LeagueFilterBar extends JPanel {
     public LeagueFilterBar() {
         super(new FlowLayout(FlowLayout.LEFT, 8, 2));
 
-        add(new JBLabel("赛事:"));
+        add(new JBLabel(FBundle.message("filter.label")));
         combo = new JComboBox<>();
         combo.setPrototypeDisplayValue("江苏城市足球联赛"); // 控制宽度, 避免长赛事名撑开
         combo.setPreferredSize(new Dimension(200, 28));
