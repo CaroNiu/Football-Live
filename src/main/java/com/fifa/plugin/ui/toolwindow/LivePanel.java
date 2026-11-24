@@ -100,6 +100,20 @@ public class LivePanel extends JPanel {
             }
         });
 
+        // Enter 键 → 打开选中行详情 (键盘路径)
+        matchTable.getInputMap(JComponent.WHEN_FOCUSED)
+                .put(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ENTER, 0), "fifaOpenDetail");
+        matchTable.getActionMap().put("fifaOpenDetail", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                int row = matchTable.getSelectedRow();
+                if (row < 0) return;
+                int viewRow = matchTable.convertRowIndexToModel(row);
+                String matchId = (String) matchListModel.getValueAt(viewRow, 7);
+                if (matchId != null && !matchId.isEmpty()) openDetailDialog(matchId);
+            }
+        });
+
         add(new JBScrollPane(matchTable), BorderLayout.CENTER);
 
         // ---- 状态栏 ----

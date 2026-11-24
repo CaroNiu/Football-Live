@@ -1,5 +1,7 @@
 # ⚽ Football Live（足球直播）— IDEA 全赛事足球直播插件
 
+**简体中文** | [English](README_EN.md)
+
 > 在 IntelliJ IDEA 中实时追踪全球足球赛事 — 五大联赛 / 欧冠 / 中超 / 世界杯等 88+ 赛事的比分、赛程、积分榜、比赛详情、新闻一站式查看。
 
 [![IntelliJ IDEA](https://img.shields.io/badge/IntelliJ%20IDEA-2024.3+-blue.svg)](https://www.jetbrains.com/idea/)
