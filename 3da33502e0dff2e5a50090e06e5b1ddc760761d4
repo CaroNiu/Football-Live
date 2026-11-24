@@ -1,0 +1,57 @@
+src/main/resources/i18n/FootballLiveBundle_zh_CN.properties
+  244e6f98a3da33fb 1-120,140-144
+src/main/java/com/fifa/plugin/core/FootballDataManager.java
+  244e6f98a3da33fb 3,110-111,113,219,225,227,252
+src/main/java/com/fifa/plugin/ui/toolwindow/LivePanel.java
+  244e6f98a3da33fb 3,58,62,69,190,192,232,255,261,280-282
+src/main/java/com/fifa/plugin/settings/FifaSettingsState.java
+  244e6f98a3da33fb 35-36,132-139
+src/main/java/com/fifa/plugin/ui/component/LeagueFilterBar.java
+  244e6f98a3da33fb 3,21,29
+src/main/java/com/fifa/plugin/ui/toolwindow/SchedulePanel.java
+  244e6f98a3da33fb 286-287,427-429,448,450
+src/main/java/com/fifa/plugin/ui/toolwindow/NewsPanel.java
+  244e6f98a3da33fb 99
+build.gradle.kts
+  244e6f98a3da33fb 7,80-87
+src/main/java/com/fifa/plugin/ui/toolwindow/FifaToolWindowFactory.java
+  244e6f98a3da33fb 3,61,65,84-88,125
+src/main/java/com/fifa/plugin/ui/action/RefreshAction.java
+  244e6f98a3da33fb 3,30-31
+src/main/java/com/fifa/plugin/ui/toolwindow/TeamRankingPanel.java
+  244e6f98a3da33fb 3,47,124,139,144
+src/main/java/com/fifa/plugin/ui/component/ClickableStatusLabel.java
+  244e6f98a3da33fb 3,25
+src/main/resources/i18n/FootballLiveBundle.properties
+  244e6f98a3da33fb 1-121,141-145
+src/main/java/com/fifa/plugin/settings/FifaSettingsConfigurable.java
+  244e6f98a3da33fb 30,45-73,137,147,157
+src/main/java/com/fifa/plugin/ui/statusbar/LiveScoreWidgetFactory.java
+  244e6f98a3da33fb 3,114,167
+src/main/java/com/fifa/plugin/ui/toolwindow/FifaRankingPanel.java
+  244e6f98a3da33fb 119
+src/main/java/com/fifa/plugin/ui/toolwindow/LiveMatchDialog.java
+  244e6f98a3da33fb 3,36,50-51,64,77,82,120,142,161,167-169,203,206,239,264,268,304,325,364,387-391
+src/main/java/com/fifa/plugin/i18n/FBundle.java
+  244e6f98a3da33fb 1-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "3da33502e0dff2e5a50090e06e5b1ddc760761d4",
+  "prompts": {
+    "244e6f98a3da33fb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1b029a22-cbc3-4a51-9d0c-367c0a1dd8ce",
+        "model": "glm-5.3-flash"
+      },
+      "human_author": "CaroNiu",
+      "messages": [],
+      "total_additions": 9585,
+      "total_deletions": 7874,
+      "accepted_lines": 17407,
+      "overriden_lines": 17
+    }
+  }
+}
